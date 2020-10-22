@@ -2,7 +2,7 @@ import itertools
 import logging
 import statistics
 from typing import NamedTuple, Optional, List
-
+from numpy.random import default_rng
 from name_gen import NameGenerator
 from genome import Genome
 
@@ -16,7 +16,9 @@ class BranchLenStats(NamedTuple):
 class TreeNode:
     def __init__(
             self, id_: int, name: str = '', edge_len: Optional[float] = None, bootstrap: Optional[float] = None,
-            children: List["TreeNode"] = [], father: Optional["TreeNode"] = None):
+            children: Optional[List["TreeNode"]] = None, father: Optional["TreeNode"] = None):
+        if children is None:
+            children = []
         self.id = id_
         self.father = father
         self.children = children

@@ -46,7 +46,7 @@ class PhylipNeighborConstructor:
                 f.unlink()
         text = f'  {len(matrix)}\n' +  '\n'.join(
             name + ' '*9 + '  '.join(
-                str(round(distance,4)).ljust(6, '0') for distance in distances) for name, distances in matrix.items())
+                str(round(distance, 4)).ljust(6, '0') for distance in distances) for name, distances in matrix.items())
         self.INPUT_PATH.write_text(text)
         subprocess.check_call(
             f"echo Y | {self.NEIGHBOR_PATH}", shell=True, cwd=self.BASE_PATH, stdout=subprocess.DEVNULL)

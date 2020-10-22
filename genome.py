@@ -32,6 +32,12 @@ class Genome:
     def len(self) -> int:
         return self._len
 
+    def __len__(self) -> int:
+        return self._len
+
+    def __str__(self) -> str:
+        return str(self._genes)
+
     @property
     def genes(self) -> List[int]:
         return self._genes

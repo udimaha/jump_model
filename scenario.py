@@ -4,6 +4,7 @@ import time
 from typing import Optional, NamedTuple
 
 from genome import GenomeMaker, make_identity_genome
+from newick import NewickParser
 from phylip import PhylipNeighborConstructor, PhylipTreeDistCalculator
 from synteny_index import calculate_synteny_distance
 from time_func import time_func
@@ -23,37 +24,50 @@ def fill_genome(node: TreeNode, genome_size: int = 10, maker: Optional[GenomeMak
         fill_genome(child, genome_size=genome_size, maker=maker)
 
 
+class TreeDesc(NamedTuple):
+    newick: str
+    internal_edges: int
+    branch_stats: BranchLenStats
+
+    def to_json(self) -> dict:
+        return {
+           "newick": self.newick,
+           "internal_edge_count": self.internal_edges,
+           "edge_count": self.branch_stats.count,
+           "median_edge_len": self.branch_stats.median,
+           "average_edge_len": self.branch_stats.average,
+        }
+
+
 class Result(NamedTuple):
-    original_tree: str
-    constructed_tree: str
+    model_tree: TreeDesc
+    constructed_tree: TreeDesc
     genome_size: int
     neighborhood_size: int
-    edge_len_lambda: float
+    expected_edge_len: float
     exclusive_edges: int
     false_positive: float
+    false_negative: float
     tree_dist: float
-    branch_len_stats: BranchLenStats
 
     def to_json(self) -> str:
         data = {
-            "original": self.original_tree,
-            "constructed": self.constructed_tree,
+            "model": self.model_tree.to_json(),
+            "constructed": self.constructed_tree.to_json(),
             "genome_size": self.genome_size,
             "neighborhood_size": self.neighborhood_size,
-            "edge_len_lambda": self.edge_len_lambda,
+            "expected_edge_len": self.expected_edge_len,
             "exclusive_edges": self.exclusive_edges,
             "false_positive": self.false_positive,
-            "tree_dist": self.tree_dist,
-            "branch_count": self.branch_len_stats.count,
-            "median_branch_len": self.branch_len_stats.median,
-            "average_branch_len": self.branch_len_stats.average
+            "false_negative": self.false_negative,
+            "tree_dist": self.tree_dist
         }
         return json.dumps(data, indent=4)
 
 
 def run_scenario(
-    size: int, scale: float, neighborhood_size: int = 5, genome_size: int = 4096,
-    genome_maker: Optional[GenomeMaker] = None) -> Result:
+    size: int, scale: float, neighborhood_size: int, genome_size: int,
+        genome_maker: Optional[GenomeMaker] = None) -> Result:
     with time_func("Constructing the Yule tree"):
         res = YuleTreeGenerator(size=size, scale=scale).construct()
     with time_func("Get branch statistics"):
@@ -122,10 +136,21 @@ def run_scenario(
     assert distance_without_len // 1 == distance_without_len
     distance_without_len = int(distance_without_len)
     print(f"Distance without len: {distance_without_len}")
-    shared_branches = ((internal_branches_orig + internal_branches_constructed) - distance_without_len) / 2
-    distinct_internal = internal_branches_orig + internal_branches_constructed - 2*shared_branches
-    fp = distinct_internal / (internal_branches_orig + internal_branches_constructed)
+    common_edges = ((internal_branches_orig + internal_branches_constructed) - distance_without_len) / 2
+    if internal_branches_orig == 0:
+        fp = 1
+    else:
+        fp = (internal_branches_orig - common_edges) / internal_branches_orig
+    if internal_branches_constructed == 0:
+        fn = 1
+    else:
+        fn = (internal_branches_constructed - common_edges) / internal_branches_constructed
     print(f"False positive estimator: {fp}")
+    print(f"False negative estimator: {fn}")
+    model_tree = TreeDesc(orig, internal_branches_orig, branch_stats)
+    constructed_res = NewickParser(constructed).parse()
+    constructed_tree = TreeDesc(constructed, internal_branches_constructed, constructed_res.root.branch_len_stats())
     return Result(
-        orig, constructed, genome_size, neighborhood_size, scale, distance_without_len, fp, distance_res, branch_stats
+        model_tree, constructed_tree, genome_size, neighborhood_size, scale, distance_without_len,
+        fp, fn, distance_res
     )
