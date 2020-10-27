@@ -27,7 +27,7 @@ def main(
 if __name__ == '__main__':
     BASE_PATH = Path("~/university/jump_model_exp/third_iteration").expanduser()
     size = 150
-    scale = 0.1
+    scale = 2.0
     genome_maker = GenomeMaker()
     while scale < 2.1:
         logging.info("Starting iterations for scale: %s size: %s", scale, size)

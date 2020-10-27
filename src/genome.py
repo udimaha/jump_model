@@ -43,9 +43,10 @@ class Genome:
         return self._genes
 
     def get_neighbourhood(self, gene: int, size: int) -> Set[int]:
-        if gene not in self._neighborhoods:
-            self._neighborhoods[gene] = get_neighbourhood(self._genes, gene, size)
-        return self._neighborhoods[gene]
+        key = (gene, size)
+        if key not in self._neighborhoods:
+            self._neighborhoods[key] = get_neighbourhood(self._genes, gene, size)
+        return self._neighborhoods[key]
 
     def __hash__(self) -> int:
         return hash(tuple(self._genes))
