@@ -4,7 +4,7 @@ import random
 
 import pytest
 
-from suffix_trees.STree import STree
+from ..STree import STree
 
 
 def yield_token(string: str):
@@ -55,23 +55,31 @@ def assert_algo(strings: List[str], check_runtime: bool = True):
 		assert sorted(res[k]) == sorted(v), f"Occurrences algorithm produced different results than naive algo for island size {k}: naive {v} != {res[k]} occurrences"
 
 
-def run_scenario(string_count: int = 256, string_size: int = 255):
+def run_scenario(string_count: int = 256, string_size: int = 301):
 	strings = _make_strings(string_count, string_size)
 	assert_algo(strings)
 
 
-@pytest.mark.parametrize("run", range(1024))
+@pytest.mark.parametrize("run", range(16))
 def test_occurrences(run: int):
 	run_scenario()
 
 
+def _superset(string: str) -> List[str]:
+	return [string[:i] for i in reversed(range(1, len(string) + 1))]
+
+
 def test_specific():
-	strings = []
-	string = "abcdefghij"
-	for i in range(1, len(string) + 1):
-		strings.append(string[:i])
+	string = "abcdefghijk"
+	strings = _superset(string)
 	assert_algo(strings, False)
 	strings.append(string + "xyz")
 	assert_algo(strings, False)
 	strings.append(string + "lmnop")
+	assert_algo(strings, False)
+
+
+def test_repeated():
+	string = ''.join(["abcdefghijk"] * 16)
+	strings = _superset(string)
 	assert_algo(strings, False)
