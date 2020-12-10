@@ -14,8 +14,8 @@ logging.basicConfig(level=logging.INFO)
 
 def main(
         size: int, scale: float, base_path: Path, iterations: int = 250,
-        genome_maker: Optional[GenomeMaker] = None, neighborhood_size: int = 5, genome_size: int = 1024):
-    pattern = f"scale_{scale}_size_{size}_neigh_{neighborhood_size}_genome_{genome_size}.json"
+        genome_maker: Optional[GenomeMaker] = None, genome_size: int = 1024):
+    pattern = f"scale_{scale}_size_{size}_genome_{genome_size}.json"
     for idx in range(iterations):
         with time_func(f"Running {idx} iteration of scenario with size {size} and scale {scale}"):
             result = run_scenario(
