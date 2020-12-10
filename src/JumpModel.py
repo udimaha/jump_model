@@ -13,8 +13,8 @@ logging.basicConfig(level=logging.INFO)
 
 
 def main(
-        size: int, scale: float, base_path: Path, iterations: int = 50,
-        genome_maker: Optional[GenomeMaker] = None, neighborhood_size: int = 5, genome_size: int = 4096):
+        size: int, scale: float, base_path: Path, iterations: int = 250,
+        genome_maker: Optional[GenomeMaker] = None, neighborhood_size: int = 5, genome_size: int = 1024):
     pattern = f"scale_{scale}_size_{size}_neigh_{neighborhood_size}_genome_{genome_size}.json"
     for idx in range(iterations):
         with time_func(f"Running {idx} iteration of scenario with size {size} and scale {scale}"):
@@ -25,12 +25,13 @@ def main(
 
 
 if __name__ == '__main__':
-    BASE_PATH = Path("~/university/jump_model_exp/third_iteration").expanduser()
+    BASE_PATH = Path("~/university/jump_model_exp/sixth_iteration").expanduser()
     size = 150
-    scale = 2.0
+    scale = 0.1
+    step = 0.1
     genome_maker = GenomeMaker()
-    while scale < 2.1:
+    while scale < 3.1:
         logging.info("Starting iterations for scale: %s size: %s", scale, size)
         main(size, scale, base_path=BASE_PATH, genome_maker=genome_maker)
-        scale = round(scale + 0.1, ndigits=2)
+        scale = round(scale + step, ndigits=2)
     # fire.Fire(main)

@@ -1,11 +1,12 @@
 import json
 import logging
 import time
-from typing import Optional, NamedTuple
+from typing import Optional, NamedTuple, Dict, List
 
 from genome import GenomeMaker, make_identity_genome
 from newick import NewickParser
 from phylip import PhylipNeighborConstructor, PhylipTreeDistCalculator
+from suffix_trees.STree import STree
 from synteny_index import calculate_synteny_distance
 from time_func import time_func
 from tree import TreeNode, BranchLenStats, YuleTreeGenerator
@@ -39,7 +40,7 @@ class TreeDesc(NamedTuple):
         }
 
 
-class Result(NamedTuple):
+class OldResult(NamedTuple):
     model_tree: TreeDesc
     constructed_tree: TreeDesc
     genome_size: int
@@ -65,9 +66,9 @@ class Result(NamedTuple):
         return json.dumps(data, indent=4)
 
 
-def run_scenario(
+def run_scenario_old(
     size: int, scale: float, neighborhood_size: int, genome_size: int,
-        genome_maker: Optional[GenomeMaker] = None) -> Result:
+        genome_maker: Optional[GenomeMaker] = None) -> OldResult:
     with time_func("Constructing the Yule tree"):
         res = YuleTreeGenerator(size=size, scale=scale).construct()
     with time_func("Get branch statistics"):
@@ -150,7 +151,49 @@ def run_scenario(
     model_tree = TreeDesc(orig, internal_branches_orig, branch_stats)
     constructed_res = NewickParser(constructed).parse()
     constructed_tree = TreeDesc(constructed, internal_branches_constructed, constructed_res.root.branch_len_stats())
-    return Result(
+    return OldResult(
         model_tree, constructed_tree, genome_size, neighborhood_size, scale, distance_without_len,
         fp, fn, distance_res
+    )
+
+
+class Result(NamedTuple):
+    model_tree: TreeDesc
+    genome_size: int
+    neighborhood_size: int
+    expected_edge_len: float
+    leaves_count: int
+    occurrences: Dict[str, List[int]]
+
+    def to_json(self) -> str:
+        data = {
+            "model": self.model_tree.to_json(),
+            "genome_size": self.genome_size,
+            "neighborhood_size": self.neighborhood_size,
+            "expected_edge_len": self.expected_edge_len,
+            "leaves_count": self.leaves_count,
+            "occurrences": json.dumps(self.occurrences),
+        }
+        return json.dumps(data, indent=4)
+
+
+def run_scenario(
+    size: int, scale: float, neighborhood_size: int, genome_size: int,
+        genome_maker: Optional[GenomeMaker] = None) -> Result:
+    with time_func("Constructing the Yule tree"):
+        res = YuleTreeGenerator(size=size, scale=scale).construct()
+    with time_func("Get branch statistics"):
+        branch_stats = res.root.branch_len_stats()
+    logging.info(
+        "Branch count: %s avg: %s median: %s expected: %s", branch_stats.count,
+        branch_stats.average, branch_stats.median, scale)
+    with time_func(f"Filling genome, size: {genome_size}"):
+        fill_genome(res.root, genome_size=genome_size, maker=genome_maker)
+    assert len(res.leaves) == size
+    newick = res.root.to_newick()
+    internal_branches_orig = len([c for c in newick if c == ')']) - 1
+    model_tree = TreeDesc(newick, internal_branches_orig, branch_stats)
+    suffix_tree = STree([''.join(map(chr, leaf.genome.genes)) for leaf in res.leaves])
+    return Result(
+        model_tree, genome_size, neighborhood_size, scale, size, suffix_tree.occurrences()
     )
