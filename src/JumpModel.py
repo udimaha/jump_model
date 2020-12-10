@@ -19,7 +19,7 @@ def main(
     for idx in range(iterations):
         with time_func(f"Running {idx} iteration of scenario with size {size} and scale {scale}"):
             result = run_scenario(
-                size, scale, neighborhood_size=neighborhood_size, genome_size=genome_size, genome_maker=genome_maker)
+                size, scale, genome_size=genome_size, genome_maker=genome_maker)
         output = (base_path / f"{uuid.uuid4()}_{pattern}")
         output.write_text(result.to_json())
 

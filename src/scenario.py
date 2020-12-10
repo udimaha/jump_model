@@ -160,7 +160,6 @@ def run_scenario_old(
 class Result(NamedTuple):
     model_tree: TreeDesc
     genome_size: int
-    neighborhood_size: int
     expected_edge_len: float
     leaves_count: int
     occurrences: Dict[str, List[int]]
@@ -169,7 +168,6 @@ class Result(NamedTuple):
         data = {
             "model": self.model_tree.to_json(),
             "genome_size": self.genome_size,
-            "neighborhood_size": self.neighborhood_size,
             "expected_edge_len": self.expected_edge_len,
             "leaves_count": self.leaves_count,
             "occurrences": json.dumps(self.occurrences),
@@ -178,7 +176,7 @@ class Result(NamedTuple):
 
 
 def run_scenario(
-    size: int, scale: float, neighborhood_size: int, genome_size: int,
+    size: int, scale: float, genome_size: int,
         genome_maker: Optional[GenomeMaker] = None) -> Result:
     with time_func("Constructing the Yule tree"):
         res = YuleTreeGenerator(size=size, scale=scale).construct()
@@ -195,5 +193,5 @@ def run_scenario(
     model_tree = TreeDesc(newick, internal_branches_orig, branch_stats)
     suffix_tree = STree([''.join(map(chr, leaf.genome.genes)) for leaf in res.leaves])
     return Result(
-        model_tree, genome_size, neighborhood_size, scale, size, suffix_tree.occurrences()
+        model_tree, genome_size, scale, size, suffix_tree.occurrences()
     )
