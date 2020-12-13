@@ -160,14 +160,14 @@ class STree:
         island = self._get_branch(node)  # node.branch
         assert not node.is_leaf()
         # print(f"Counting node {node} for island: {island}")
-        end_sub_island = self._get_branch(node.suffix_link)
-        assert island.endswith(end_sub_island), f"Island is: {island} sub-island is: {end_sub_island}, suffix link is: {node.suffix_link}"
+        # end_sub_island = self._get_branch(node.suffix_link)
+        # assert island.endswith(end_sub_island), f"Island is: {island} sub-island is: {end_sub_island}, suffix link is: {node.suffix_link}"
         start_sub_island = self._get_branch(node.parent)
         assert island.startswith(start_sub_island), f"Island is: {island} sub-island is: {start_sub_island} parent is: {node.parent}"
-        end_gap = len(island) - len(end_sub_island)
+        # end_gap = len(island) - len(end_sub_island)
         start_gap = len(island) - len(start_sub_island)
         # print(f"Found correct sub-islands for {island}, start: {start_sub_island} end: {end_sub_island}")
-        for gap_index in (start_gap, end_gap):
+        for gap_index in (start_gap,):# end_gap):
             for gap in range(1, gap_index):
                 key = len(island) - gap
                 self._occurences.setdefault(key, []).append(count)
