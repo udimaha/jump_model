@@ -247,13 +247,16 @@ def run_scenario(
     total_jumped = []
     with time_func(f"Filling genome, size: {genome_size}"):
         fill_genome(res.root, genome_size=genome_size, maker=genome_maker, total_jumped=total_jumped)
+
     assert len(res.leaves) == size
 
     newick = res.root.to_newick()
     internal_branches_orig = len([c for c in newick if c == ')']) - 1
     model_tree = TreeDesc(newick, internal_branches_orig, branch_stats)
     suffix_tree = STree([''.join(map(chr, leaf.genome.genes)) for leaf in res.leaves])
+    with time_func(f"Counting occurrences"):
+        occurrences = suffix_tree.occurrences()
     return Result(
         model_tree, genome_size, scale, size, sum(total_jumped), statistics.mean(total_jumped) if total_jumped else 0,
-        suffix_tree.occurrences()
+        occurrences
     )
