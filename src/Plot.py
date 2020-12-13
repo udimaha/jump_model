@@ -86,8 +86,10 @@ if __name__ == '__main__':
 				v = list(data['occurrences'][key])
 				max_unique = LEAVES * (genome_size - k + 1)
 				unique_islands = max_unique - sum(v)
-				v.extend([1]*unique_islands)
-				island_data.setdefault(k, []).append(statistics.mean(v))
+				nominator = sum(v) + unique_islands
+				denominator = len(v) + unique_islands
+				#v.extend([1]*unique_islands)
+				island_data.setdefault(k, []).append(nominator / denominator)
 		print(f"Finished processing single file, took: {time.monotonic() - start} seconds with dict size of {len(data['occurrences'])}")
 		if not found_some:
 			print("FOUND NO REPETITIONS FOR ANY K!")
