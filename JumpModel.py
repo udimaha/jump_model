@@ -23,8 +23,6 @@ def main(
         output = (base_path / f"{uuid.uuid4()}_{pattern}")
         with gzip.open(str(output.with_suffix(".json.tar.gz")), "w") as f_gz:
             f_gz.write(result.to_json().encode())
-        with gzip.open(str(output.with_suffix(".bytes.tar.gz")), "w") as f_gz:
-            f_gz.write(result.serialize())
 
 
 if __name__ == '__main__':
