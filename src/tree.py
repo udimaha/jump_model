@@ -124,8 +124,8 @@ class YuleTreeGenerator:  # TODO: Calculate average branch length, assert that i
     def __init__(self, size: int, scale: float):
         if scale <= 0:
             raise ValueError("scale must be a positive number")
-        if size != 1 and size % 2 != 0:
-            raise ValueError("size must be an even number")
+        # if size != 1 and size % 2 != 0:
+        #     raise ValueError("size must be an even number")
 
         self._rndm_gen = default_rng()
         self._size = size
