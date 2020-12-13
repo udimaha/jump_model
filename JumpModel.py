@@ -21,7 +21,7 @@ def main(
             result = run_scenario(
                 size, scale, genome_size=genome_size, genome_maker=genome_maker)
         output = (base_path / f"{uuid.uuid4()}_{pattern}")
-        with gzip.open(str(output.with_suffix(".json.tar.gz")), "w") as f_gz:
+        with gzip.open(str(output.with_suffix(".json.gz")), "w") as f_gz:
             f_gz.write(result.to_json().encode())
 
 
