@@ -1,6 +1,6 @@
 import itertools
 import logging
-from typing import List, Set
+from typing import List, Set, Tuple
 from numpy.random import default_rng
 
 
@@ -60,7 +60,7 @@ class GenomeMaker:
     def __init__(self):
         self._rndm_gen = default_rng()
 
-    def make(self, genome: Genome, scale: float) -> Genome:
+    def make(self, genome: Genome, scale: float) -> Tuple[int, Genome]:
         assert scale != 0
         logging.debug("Original genome: %s", genome.genes)
         jumping = [
@@ -69,7 +69,7 @@ class GenomeMaker:
             if probability >= 1]
         if not jumping:
             logging.debug("No genes jumped!")
-            return Genome(genome.genes)
+            return 0, Genome(genome.genes)
         logging.debug("%s Genes are jumping: %s", len(jumping), jumping)
         new_genome = list()
         last_index = 0
@@ -87,7 +87,7 @@ class GenomeMaker:
                 continue
             new_genome = new_genome[:new_idx] + [genome.genes[old_idx]] + new_genome[new_idx:]
         assert len(new_genome) == genome.len, new_genome
-        return Genome(new_genome)
+        return len(jumping), Genome(new_genome)
 
 
 def test_genome_maker():
