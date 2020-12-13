@@ -150,15 +150,15 @@ class STree:
         """Helper method, returns the edge label between a node and it's parent"""
         return self._get_branch(node.parent) + self.word[node.idx + node.parent.depth: node.idx + node.depth]
 
-    def _count_occurrences(self, node: "_SNode"):
+    def _count_occurrences(self, node: "_SNode") -> bool:
         if node in self._visited:
-            return
+            return True
         self._visited.add(node)
         count = len(node.generalized_idxs)
         if count == 1:  # TODO: Test how much does this improve performance-wise
-            return
+            return False
         island = self._get_branch(node)  # node.branch
-        assert not node.is_leaf()
+        assert not node.is_leaf()  # The leaf will only have the suffix character
         # print(f"Counting node {node} for island: {island}")
         # end_sub_island = self._get_branch(node.suffix_link)
         # assert island.endswith(end_sub_island), f"Island is: {island} sub-island is: {end_sub_island}, suffix link is: {node.suffix_link}"
@@ -172,12 +172,13 @@ class STree:
                 key = len(island) - gap
                 self._occurences.setdefault(key, []).append(count)
         self._occurences.setdefault(len(island), []).append(count)
+        return True
 
     def occurrences(self) -> dict:
         self._occurences = {}
         self._visited: Set["_SNode"] = set()  # TODO: Fuck this is stupid
         self._visited.add(self.root)
-        self.root._traverse(self._count_occurrences)
+        self.root._traverse_if(self._count_occurrences)
         return self._occurences
 
     def lcs(self, stringIdxs=-1):
@@ -364,6 +365,12 @@ class _SNode:
 
     def is_leaf(self):
         return len(self.transition_links) == 0
+
+    def _traverse_if(self, f):
+        if not f(self):
+            return
+        for node in self.transition_links.values():
+            node._traverse(f)
 
     def _traverse(self, f):
         for node in self.transition_links.values():
