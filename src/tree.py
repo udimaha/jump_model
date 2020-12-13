@@ -1,16 +1,20 @@
 import itertools
 import logging
 import statistics
+from math import isclose
 from typing import NamedTuple, Optional, List
 from numpy.random import default_rng
-from name_gen import NameGenerator
-from genome import Genome
+from .name_gen import NameGenerator
+from .genome import Genome
 
 
 class BranchLenStats(NamedTuple):
     average: float
     median: float
     count: int
+
+    def __eq__(self, other: 'BranchLenStats'):
+        return self.count == other.count and isclose(self.average, other.average, rel_tol=1e-07) and isclose(self.median, other.median, rel_tol=1e-07)
 
 
 class TreeNode:

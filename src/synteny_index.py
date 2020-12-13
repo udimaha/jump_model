@@ -1,4 +1,4 @@
-from genome import Genome
+from .genome import Genome
 
 
 def calculate_synteny_index(g1: Genome, g2: Genome, gene: int, neighborhood_size: int) -> int:

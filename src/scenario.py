@@ -1,15 +1,18 @@
 import json
 import logging
+import struct
 import time
-from typing import Optional, NamedTuple, Dict, List
+from math import isclose
+from typing import Optional, NamedTuple, Dict, List, Tuple
 
-from genome import GenomeMaker, make_identity_genome
-from newick import NewickParser
-from phylip import PhylipNeighborConstructor, PhylipTreeDistCalculator
-from suffix_trees.STree import STree
-from synteny_index import calculate_synteny_distance
-from time_func import time_func
-from tree import TreeNode, BranchLenStats, YuleTreeGenerator
+from .genome import GenomeMaker, make_identity_genome
+from .newick import NewickParser
+from .occurrences import Occurrences, serialize_occurrences, deserialize_occurrences
+from .phylip import PhylipNeighborConstructor, PhylipTreeDistCalculator
+from .suffix_trees.STree import STree
+from .synteny_index import calculate_synteny_distance
+from .time_func import time_func
+from .tree import TreeNode, BranchLenStats, YuleTreeGenerator
 
 
 def fill_genome(node: TreeNode, genome_size: int = 10, maker: Optional[GenomeMaker] = None):
@@ -38,6 +41,23 @@ class TreeDesc(NamedTuple):
            "median_edge_len": self.branch_stats.median,
            "average_edge_len": self.branch_stats.average,
         }
+
+    def serialize(self) -> bytes:
+        newick = self.newick.encode()
+        format_ = f"i{len(newick)}siiff"
+        return struct.pack(
+            format_, len(newick), newick, self.internal_edges, self.branch_stats.count,
+            self.branch_stats.median, self.branch_stats.average)
+
+    @classmethod
+    def deserialize(cls, data: bytes) -> Tuple[int, 'TreeDesc']:
+        newick_len, = struct.unpack("i", data[:4])
+        format_ = f"{newick_len}siiff"
+        total_parsed = 4+struct.calcsize(format_)
+        newick, internal_edges, edge_count, median_edge, avg_edge = struct.unpack(
+            format_, data[4:total_parsed])
+        return total_parsed, TreeDesc(
+            newick.decode(), internal_edges, BranchLenStats(avg_edge, median_edge, edge_count))
 
 
 class OldResult(NamedTuple):
@@ -162,7 +182,7 @@ class Result(NamedTuple):
     genome_size: int
     expected_edge_len: float
     leaves_count: int
-    occurrences: Dict[str, List[int]]
+    occurrences: Occurrences
 
     def to_json(self) -> str:
         data = {
@@ -173,6 +193,34 @@ class Result(NamedTuple):
             "occurrences": json.dumps(self.occurrences),
         }
         return json.dumps(data, indent=4)
+
+    def serialize(self) -> bytes:
+        format_ = "ifi"
+        return self.model_tree.serialize() + struct.pack(
+            format_, self.genome_size, self.expected_edge_len, self.leaves_count) + serialize_occurrences(self.occurrences)
+
+    @classmethod
+    def deserialize(cls, data: bytes) -> 'Result':
+        parsed, model_tree = TreeDesc.deserialize(data)
+        format_ = "ifi"
+        total_parsed = parsed+struct.calcsize(format_)
+        genome_size, expected_edge_len, leaves_count = struct.unpack(format_, data[parsed:total_parsed])
+        occurrences = deserialize_occurrences(data[total_parsed:])
+        return Result(model_tree, genome_size, expected_edge_len, leaves_count, occurrences)
+
+    def __eq__(self, other: 'Result') -> bool:
+        if self.genome_size != other.genome_size or not isclose(self.expected_edge_len, other.expected_edge_len, rel_tol=1e-07) or self.leaves_count != other.leaves_count:
+            return False
+        if self.model_tree != other.model_tree:
+            return False
+        if len(self.occurrences) != len(other.occurrences):
+            return False
+        for k, v in self.occurrences.items():
+            if k not in other.occurrences:
+                return False
+            if v != other.occurrences[k]:
+                return False
+        return True
 
 
 def run_scenario(
