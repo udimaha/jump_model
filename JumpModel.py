@@ -9,7 +9,11 @@ from src.genome import GenomeMaker
 from src.scenario import run_scenario
 from src.time_func import time_func
 
-logging.basicConfig(level=logging.INFO)
+
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
 
 
 def main(
