@@ -1,3 +1,4 @@
+import gzip
 import time
 import json
 import statistics
@@ -81,14 +82,16 @@ def _process_file(to_process: Path):
 		time.monotonic() - start, len(data['occurrences']))
 	if not found_some:
 		logging.warning("FOUND NO REPETITIONS FOR ANY K!")
-	with output.with_suffix(".json").open("w") as f:
-		json.dump(
-			{
+	with gzip.open(str(output), "w") as f:
+		data = {
+				"genome_size": genome_size,
+				"leaves_count": leaves,
 				"expected_edge_len": expected_edge,
 				"island_stats": island_data,
 				"total_jumps": data['total_jumps'],
 				"avg_jumps": data['avg_jumps'],
-			}, f)
+			}
+		f.write(json.dumps(data).encode())
 
 
 if __name__ == '__main__':
