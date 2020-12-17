@@ -55,8 +55,8 @@ def _process_file(to_process: Path):
 	assert not output.exists()
 	island_data = {}
 	start = time.monotonic()
-	with to_process.open("r") as f:
-		data = json.load(f)
+	with gzip.open(str(to_process), "r") as f:
+		data = json.load(f.read().decode())
 	data['occurrences'] = json.loads(data['occurrences'])
 	leaves = data['leaves_count']
 	genome_size = int(data['genome_size'])
