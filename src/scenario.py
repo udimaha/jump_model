@@ -22,8 +22,6 @@ def fill_genome(
     assert total_jumped is not None
     if not maker:
         maker = GenomeMaker()
-    if not total_jumped:
-        total_jumped = []
     if node.father is None:
         identity_genome = make_identity_genome(genome_size)
         node.genome = identity_genome
@@ -152,18 +150,18 @@ def run_scenario_old(
     distance_calc = PhylipTreeDistCalculator()
     with time_func("Runing Phylip TreeDist"):
         distance_res = distance_calc.calc(orig, constructed)
-    print("Original tree: ")
-    print(orig)
-    print("Constructed tree:")
-    print(constructed)
-    print("TreeDist result:")
-    print(distance_res)
+    logging.debug("Original tree: ")
+    logging.debug(orig)
+    logging.debug("Constructed tree:")
+    logging.debug(constructed)
+    logging.debug("TreeDist result:")
+    logging.debug(distance_res)
     internal_branches_orig = len([c for c in orig if c == ')']) - 1
     internal_branches_constructed = len([c for c in constructed if c == ')']) - 1
     distance_without_len = distance_calc.calc(orig, constructed, False)
     assert distance_without_len // 1 == distance_without_len
     distance_without_len = int(distance_without_len)
-    print(f"Distance without len: {distance_without_len}")
+    logging.debug("Distance without len: %s", distance_without_len)
     common_edges = ((internal_branches_orig + internal_branches_constructed) - distance_without_len) / 2
     if internal_branches_orig == 0:
         fp = 1
@@ -173,8 +171,8 @@ def run_scenario_old(
         fn = 1
     else:
         fn = (internal_branches_constructed - common_edges) / internal_branches_constructed
-    print(f"False positive estimator: {fp}")
-    print(f"False negative estimator: {fn}")
+    logging.debug("False positive estimator: %s", fp)
+    logging.debug("False negative estimator: %s", fn)
     model_tree = TreeDesc(orig, internal_branches_orig, branch_stats)
     constructed_res = NewickParser(constructed).parse()
     constructed_tree = TreeDesc(constructed, internal_branches_constructed, constructed_res.root.branch_len_stats())
@@ -261,7 +259,7 @@ def run_scenario(
     internal_branches_orig = len([c for c in newick if c == ')']) - 1
     model_tree = TreeDesc(newick, internal_branches_orig, branch_stats)
     suffix_tree = STree([''.join(map(chr, leaf.genome.genes)) for leaf in res.leaves])
-    with time_func(f"Counting occurrences"):
+    with time_func("Counting occurrences"):
         occurrences = suffix_tree.occurrences()
     return Result(
         model_tree, genome_size, scale, size, sum(total_jumped), statistics.mean(total_jumped) if total_jumped else 0,
