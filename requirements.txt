@@ -5,3 +5,5 @@ matplotlib
 fire
 pandas
 Pillow
+imageio
+pygifsicle
