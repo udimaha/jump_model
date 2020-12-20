@@ -64,16 +64,29 @@ class DistData:
 AvgByEdge = Dict[int, DistData]
 
 
-def read_distributions(data_path: Path) -> Tuple[Dict[str, AvgByEdge], Dict[int, List[float]]]:
+class JumpStats:
+	def __init__(self):
+		self.avg: List[float] = []
+		self.total: List[float] = []
+
+
+AvgJumps = Dict[int, JumpStats]
+
+
+def read_distributions(data_path: Path) -> Tuple[Dict[str, AvgByEdge], AvgJumps]:
 	avg_jumps = {}
 	distribution = {}
 	for data_f in data_path.glob("*.gz"):
 		with gzip.open(str(data_f.absolute()), "r") as f:
 			data = json.loads(f.read().decode())
-		edge_len = data['expected_edge_len']
-		stats = data['island_stats']
-		average_jumps = round(data['avg_jumps'], 2)
-		avg_jumps.setdefault(edge_len, []).append(average_jumps)
+		edge_len = data["expected_edge_len"]
+		stats = data["island_stats"]
+		average_jumps = round(data["avg_jumps"], 2)
+		total_jumps = data["total_jumps"]
+		jump_stats = avg_jumps.setdefault(edge_len, JumpStats())
+		assert total_jumps != average_jumps
+		jump_stats.avg.append(average_jumps)
+		jump_stats.total.append(total_jumps)
 		for k, v in stats.items():
 			assert len(v) == 1
 			dist_data = distribution.setdefault(k, {}).setdefault(edge_len, DistData())
@@ -115,18 +128,26 @@ def make_jumps_panel(distributions: Dict[str, AvgByEdge], island_size: int) -> P
 	)
 
 
-def make_total_jumps_panel(average_jumps: Dict[int, float]) -> Panel:
-	jumps = sorted({k: v for k, v in average_jumps.items()}.items())
-	return Panel(
-		title=f'Average jumps by edge length', xlabel="Average Jumps", ylabel="Edge Length",
-		kwargs={
-			"x": [v for _, v in jumps], "bins": len(jumps), "label": [f"EdgeLen: {v}" for v, _ in jumps]}
-	)
+def make_total_jumps_panels(average_jumps: AvgJumps) -> List[Panel]:
+	avg_jumps = sorted({k: v.avg for k, v in average_jumps.items()}.items())
+	total_jumps = sorted({k: v.total for k, v in average_jumps.items()}.items())
+	return [
+		Panel(
+			title=f'Average jumps by edge length', xlabel="Average Jumps", ylabel="Edge Length",
+			kwargs={
+				"x": [v for _, v in avg_jumps], "bins": len(avg_jumps), "label": [f"EdgeLen: {v}" for v, _ in avg_jumps]}
+		),
+		Panel(
+			title=f'Total jumps by edge length', xlabel="Total Jumps", ylabel="Edge Length",
+			kwargs={
+				"x": [v for _, v in total_jumps], "bins": len(total_jumps), "label": [f"EdgeLen: {v}" for v, _ in total_jumps]}
+		),
+	]
 
 
-def plot_jumps(average_jumps: Dict[int, float]):
+def plot_jumps(average_jumps: AvgJumps):
 	viz = HistogramVisualizer()
-	panels = [make_total_jumps_panel(average_jumps)]
+	panels = make_total_jumps_panels(average_jumps)
 	viz.show(panels)
 
 
@@ -154,11 +175,11 @@ if __name__ == '__main__':
 	DATA_PATH = Path("~/university/jump_model_exp/4096_island_out/distributions").expanduser()
 	assert DATA_PATH.exists() and DATA_PATH.is_dir()
 	with time_func(f"Reading distributions from {DATA_PATH}"):
-		dists, avg_jumps = read_distributions(DATA_PATH)
+		dists, jumps = read_distributions(DATA_PATH)
 	# with time_func("Plotting histogram"):
 	# 	plot_distribution(dists, [2**5, 2**6, 2**7, 2**8])
 	with time_func("Plotting jumps"):
-		plot_jumps(avg_jumps)
+		plot_jumps(jumps)
 
 
 # viz = HistogramVisualizer()
