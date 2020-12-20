@@ -1,20 +1,17 @@
 import logging
-from typing import Dict, List, NamedTuple, Iterable
+from typing import Dict, List, NamedTuple, Iterable, Tuple
 import json
 from pathlib import Path
 import matplotlib.pyplot as plt
 import seaborn as sns
 import gzip
 
-from src import time_func
+from src.time_func import time_func
 
 logging.basicConfig(
 	format='%(asctime)s %(levelname)-8s %(message)s',
 	level=logging.INFO,
 	datefmt='%Y-%m-%d %H:%M:%S')
-
-
-AvgByEdge = Dict[int, List[float]]
 
 
 class Panel(NamedTuple):
@@ -33,7 +30,7 @@ class HistogramVisualizer:
 		self._panel = 221
 
 	def get_next_panel_id(self) -> int:
-		if self._panel == self.MAX_PANEL:
+		if self._panel > self.MAX_PANEL:
 			raise RuntimeError("Cannot visualize more than 4 panels.")
 		res = self._panel
 		self._panel += 1
@@ -43,11 +40,11 @@ class HistogramVisualizer:
 		panel_id = self.get_next_panel_id()
 		plt.subplot(panel_id)
 		# plt.plot(panel.xs, panel.ys)
-		plt.legend()
 		plt.hist(**panel.kwargs)
 		plt.xlabel = panel.xlabel
 		plt.ylabel = panel.ylabel
 		plt.title(panel.title)
+		plt.legend()
 
 	def show(self, panels: List[Panel]):
 		if len(panels) > 4 or not panels:
@@ -58,17 +55,31 @@ class HistogramVisualizer:
 		plt.show()
 
 
-def read_distributions(data_path: Path) -> Dict[str, AvgByEdge]:
+class DistData:
+	def __init__(self):
+		self.avg_occurrences: List[float] = []
+		self.avg_jumps: List[float] = []
+
+
+AvgByEdge = Dict[int, DistData]
+
+
+def read_distributions(data_path: Path) -> Tuple[Dict[str, AvgByEdge], Dict[int, List[float]]]:
+	avg_jumps = {}
 	distribution = {}
 	for data_f in data_path.glob("*.gz"):
 		with gzip.open(str(data_f.absolute()), "r") as f:
 			data = json.loads(f.read().decode())
 		edge_len = data['expected_edge_len']
 		stats = data['island_stats']
+		average_jumps = round(data['avg_jumps'], 2)
+		avg_jumps.setdefault(edge_len, []).append(average_jumps)
 		for k, v in stats.items():
 			assert len(v) == 1
-			distribution.setdefault(k, {}).setdefault(edge_len, []).append(round(v[0], 1))
-	return distribution
+			dist_data = distribution.setdefault(k, {}).setdefault(edge_len, DistData())
+			dist_data.avg_occurrences.append(round(v[0], 1))
+			dist_data.avg_jumps.append(average_jumps)
+	return distribution, avg_jumps
 
 # # Make a separate list for each airline
 # x1 = list(flights[flights['name'] == 'United Air Lines Inc.']['arr_delay'])
@@ -86,15 +97,45 @@ def read_distributions(data_path: Path) -> Dict[str, AvgByEdge]:
 # Normalize the flights and assign colors and names
 
 
-def plot_distribution(distributions:  Dict[str, AvgByEdge], island_size: int):
+def make_occurrences_panel(distributions: Dict[str, AvgByEdge], island_size: int) -> Panel:
 	island = sorted({k: v for k, v in distributions[str(island_size)].items()}.items())
-	viz = HistogramVisualizer()
-	panel = Panel(
-		title=f'Occurrences of size {island_size} islands', xlabel="Occurrences", ylabel="Edge Length",
+	return Panel(
+		title=f'Average occurrences of island of size {island_size} genes', xlabel="Average Occurrences", ylabel="Edge Length",
+		kwargs={
+			"x": [v.avg_occurrences for _, v in island], "bins": len(island), "label": [f"EdgeLen: {v}" for v, _ in island]}
+	)
+
+
+def make_jumps_panel(distributions: Dict[str, AvgByEdge], island_size: int) -> Panel:
+	island = sorted({k: v for k, v in distributions[str(island_size)].items()}.items())
+	return Panel(
+		title=f'Average jumps for island size {island_size} genes', xlabel="Average Jumps", ylabel="Edge Length",
 		kwargs={
 			"x": [v for _, v in island], "bins": len(island), "label": [f"EdgeLen: {v}" for v, _ in island]}
 	)
-	viz.show([panel])
+
+
+def make_total_jumps_panel(average_jumps: Dict[int, float]) -> Panel:
+	jumps = sorted({k: v for k, v in average_jumps.items()}.items())
+	return Panel(
+		title=f'Average jumps by edge length', xlabel="Average Jumps", ylabel="Edge Length",
+		kwargs={
+			"x": [v for _, v in jumps], "bins": len(jumps), "label": [f"EdgeLen: {v}" for v, _ in jumps]}
+	)
+
+
+def plot_jumps(average_jumps: Dict[int, float]):
+	viz = HistogramVisualizer()
+	panels = [make_total_jumps_panel(average_jumps)]
+	viz.show(panels)
+
+
+def plot_distribution(distributions: Dict[str, AvgByEdge], island_sizes: List[int]):
+	viz = HistogramVisualizer()
+	assert len(island_sizes) == 4
+	panels = [make_occurrences_panel(distributions, island) for island in island_sizes]
+	assert len(panels) == 4
+	viz.show(panels)
 
 	# plt.hist(
 	# 	x=[v for _, v in island],
@@ -113,9 +154,11 @@ if __name__ == '__main__':
 	DATA_PATH = Path("~/university/jump_model_exp/4096_island_out/distributions").expanduser()
 	assert DATA_PATH.exists() and DATA_PATH.is_dir()
 	with time_func(f"Reading distributions from {DATA_PATH}"):
-		dists = read_distributions(DATA_PATH)
-	with time_func("Plotting histogram"):
-		plot_distribution(dists, 10)
+		dists, avg_jumps = read_distributions(DATA_PATH)
+	# with time_func("Plotting histogram"):
+	# 	plot_distribution(dists, [2**5, 2**6, 2**7, 2**8])
+	with time_func("Plotting jumps"):
+		plot_jumps(avg_jumps)
 
 
 # viz = HistogramVisualizer()
