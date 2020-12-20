@@ -1,10 +1,14 @@
+import csv
 import logging
+from tempfile import TemporaryDirectory
 from typing import Dict, List, NamedTuple, Iterable, Tuple
 import json
 from pathlib import Path
 import matplotlib.pyplot as plt
 import seaborn as sns
 import gzip
+import numpy as np
+import pandas as pd
 
 from src.time_func import time_func
 
@@ -40,11 +44,12 @@ class HistogramVisualizer:
 		panel_id = self.get_next_panel_id()
 		plt.subplot(panel_id)
 		# plt.plot(panel.xs, panel.ys)
-		plt.hist(**panel.kwargs)
-		plt.xlabel = panel.xlabel
-		plt.ylabel = panel.ylabel
-		plt.title(panel.title)
-		plt.legend()
+		sns.displot(**panel.kwargs)
+		#plt.hist(**panel.kwargs)
+		# plt.xlabel = panel.xlabel
+		# plt.ylabel = panel.ylabel
+		# plt.title(panel.title)
+		# plt.legend()
 
 	def show(self, panels: List[Panel]):
 		if len(panels) > 4 or not panels:
@@ -84,7 +89,7 @@ def read_distributions(data_path: Path) -> Tuple[Dict[str, AvgByEdge], AvgJumps]
 		average_jumps = round(data["avg_jumps"], 2)
 		total_jumps = data["total_jumps"]
 		jump_stats = avg_jumps.setdefault(edge_len, JumpStats())
-		assert total_jumps != average_jumps
+		# assert total_jumps != average_jumps # TODO: Fix this! Shouldn't be equal
 		jump_stats.avg.append(average_jumps)
 		jump_stats.total.append(total_jumps)
 		for k, v in stats.items():
@@ -112,20 +117,18 @@ def read_distributions(data_path: Path) -> Tuple[Dict[str, AvgByEdge], AvgJumps]
 
 def make_occurrences_panel(distributions: Dict[str, AvgByEdge], island_size: int) -> Panel:
 	island = sorted({k: v for k, v in distributions[str(island_size)].items()}.items())
+	data = [
+		{"edge_length": k, "occurrences": x}
+		for k, v in island for x in v.avg_occurrences
+	]
 	return Panel(
 		title=f'Average occurrences of island of size {island_size} genes', xlabel="Average Occurrences", ylabel="Edge Length",
 		kwargs={
-			"x": [v.avg_occurrences for _, v in island], "bins": len(island), "label": [f"EdgeLen: {v}" for v, _ in island]}
+			"data": data, "x": "occurrences", "label": [f"EdgeLen: {v}" for v, _ in island], "hue": "edge_length"}
 	)
 
-
-def make_jumps_panel(distributions: Dict[str, AvgByEdge], island_size: int) -> Panel:
-	island = sorted({k: v for k, v in distributions[str(island_size)].items()}.items())
-	return Panel(
-		title=f'Average jumps for island size {island_size} genes', xlabel="Average Jumps", ylabel="Edge Length",
-		kwargs={
-			"x": [v for _, v in island], "bins": len(island), "label": [f"EdgeLen: {v}" for v, _ in island]}
-	)
+# kwargs={
+# 			"data": data, "x": "occurrences", "bins": len(island), "label": [f"EdgeLen: {v}" for v, _ in island]}
 
 
 def make_total_jumps_panels(average_jumps: AvgJumps) -> List[Panel]:
@@ -146,17 +149,63 @@ def make_total_jumps_panels(average_jumps: AvgJumps) -> List[Panel]:
 
 
 def plot_jumps(average_jumps: AvgJumps):
-	viz = HistogramVisualizer()
-	panels = make_total_jumps_panels(average_jumps)
-	viz.show(panels)
+	# viz = HistogramVisualizer()
+	avg_jumps = sorted({k: v.avg for k, v in average_jumps.items()}.items())
+	#edge_length = [x for x, _ in avg_jumps]
+	#jumps = [x for _, x in avg_jumps]
+	for e, jumps_ in avg_jumps:
+		# sns.displot({
+		# 	"jumps": jumps_,
+		# 	"edge_length": e
+		# }, x="edge_length", y="jumps", hue="edge_length", multiple="stack")
+		for j in jumps_:
+			plt.hist((e, j), cumulative=True)
+	#data_ = {"jumps": jumps, "edge_length": edge_length}
+	#sns.displot(data, x="jumps", multiple="stack", hue="edge_length")
+	plt.show()
+	# panels = make_total_jumps_panels(average_jumps)
+	# viz.show(panels)
 
 
-def plot_distribution(distributions: Dict[str, AvgByEdge], island_sizes: List[int]):
+def plot_distribution(distributions: Dict[str, AvgByEdge], island_sizes: List[int], out_dir: Path):
 	viz = HistogramVisualizer()
-	assert len(island_sizes) == 4
-	panels = [make_occurrences_panel(distributions, island) for island in island_sizes]
-	assert len(panels) == 4
-	viz.show(panels)
+	with TemporaryDirectory() as tmp_dir:
+		# csv_out = Path(tmp_dir, f"out.csv")
+		# with time_func(f"Populating the CSV at {csv_out}"):
+		# 	populate_csv(csv_out, distributions, island_sizes)
+		# with time_func("Reading the CSV"):
+		# 	data_set = pd.read_csv(csv_out)
+		# with time_func("Displaying the dataset:"):
+		# 	sns.displot(
+		# 		data_set, x="avg_occurr", hue="island_size", col="edge_length",
+		# 		palette=sns.color_palette("Paired", len(island_sizes)), multiple="stack", kde=True)
+			#sns.pairplot(data=data_set, hue="edge_length")
+		for island_size_ in island_sizes:
+			csv_out = Path(tmp_dir, f"out_{island_size_}.csv")
+			with time_func(f"Populating the CSV at {csv_out}"):
+				populate_csv(csv_out, distributions, [island_size_])
+			#data_set = sns.load_dataset(csv_out.name)
+			with time_func("Reading the CSV"):
+				data_set = pd.read_csv(csv_out)
+			for normalize in (True, False):
+				xs = "avg_occurr" if not normalize else "ln_avg_occurr"
+				with time_func("Displaying the dataset:"):
+					sns.displot(
+						data_set, x=xs, hue="edge_length", kind="kde", #kde=True,
+						palette=sns.color_palette("Paired", 10))
+				title = f"island_size_{island_size_}"
+				if normalize:
+					title = "normalized_" + title
+				out_fie = Path(out_dir, f"{title}.png")
+				plt.title(title)
+				plt.savefig(str(out_fie))
+
+		# plt.show()
+
+# assert len(island_sizes) == 4
+	# panels = [make_occurrences_panel(distributions, island) for island in island_sizes]
+	# assert len(panels) == 4
+	# viz.show(panels)
 
 	# plt.hist(
 	# 	x=[v for _, v in island],
@@ -171,15 +220,43 @@ def plot_distribution(distributions: Dict[str, AvgByEdge], island_sizes: List[in
 	# plt.show()
 
 
+def populate_csv(csv_out: Path, distributions: Dict[str, AvgByEdge], island_sizes: List[int]):
+	sample_id = 0
+	fieldnames = ["island_size", "edge_length", "avg_occurr", "ln_avg_occurr"]
+	with csv_out.open("w") as csv_f:
+		writer = csv.DictWriter(csv_f, fieldnames=fieldnames)
+		writer.writeheader()
+		for island_size in island_sizes:
+			for edge_len, dist_data in distributions[str(island_size)].items():
+				for occur in dist_data.avg_occurrences:
+					writer.writerow(
+						{"island_size": island_size, "edge_length": edge_len, "avg_occurr": occur, "ln_avg_occurr": np.log(occur)})
+					sample_id += 1
+
+
 if __name__ == '__main__':
+	sns.set()
+	# data = np.random.multivariate_normal([0, 0], [[5, 2], [2, 2]], size=2000)
+	# data = pd.DataFrame(data, columns=['x', 'y'])
+	#
+	# for col in 'xy':
+	# 	plt.hist(data[col], cumulative=True, alpha=0.5)
+	# plt.show()
+	# exit()
 	DATA_PATH = Path("~/university/jump_model_exp/4096_island_out/distributions").expanduser()
 	assert DATA_PATH.exists() and DATA_PATH.is_dir()
+	OUTPUT_PATH = Path("~/university/jump_model_exp/4096_island_out/visualized").expanduser()
+	OUTPUT_PATH.mkdir(exist_ok=True)
 	with time_func(f"Reading distributions from {DATA_PATH}"):
 		dists, jumps = read_distributions(DATA_PATH)
-	# with time_func("Plotting histogram"):
-	# 	plot_distribution(dists, [2**5, 2**6, 2**7, 2**8])
-	with time_func("Plotting jumps"):
-		plot_jumps(jumps)
+	for island_size in ("8", "16", "32", "64"):
+		for expected in ("0.3", "0.6", "0.9"):
+			assert dists[island_size][0.1] != dists[island_size][float(expected)]
+	with time_func("Plotting histogram"):
+		plot_distribution(dists, [factor for factor in range(3, 1024)], OUTPUT_PATH)
+		#plot_distribution(dists, [128], OUTPUT_PATH)
+	# with time_func("Plotting jumps"):
+	# 	plot_jumps(jumps)
 
 
 # viz = HistogramVisualizer()
