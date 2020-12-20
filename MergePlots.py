@@ -38,7 +38,8 @@ def merge_files(directory: Path, file_pattern: str, output: Path):
 					logging.info("Progress %s percent done", index / steps * 10)
 				image = imageio.imread(filename)
 				writer.append_data(image)
-	optimize_giff(output)
+	with time_func(f"Optimizing giff: {output}"):
+		optimize_giff(str(output.absolute()))
 	# img, *imgs = [Image.open(f) for _, f in sorted(by_key.items())]
 	# img.save(
 	# 	fp=output, format='GIF', append_images=imgs, save_all=True, duration=200, loop=0)
