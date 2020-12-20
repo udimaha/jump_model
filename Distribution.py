@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 import matplotlib.pyplot as plt
 import seaborn as sns
-import gzip
 
 DATA_PATH = Path("~/university/jump_model_exp/256_island_out").expanduser()
 assert DATA_PATH.exists() and DATA_PATH.is_dir()
