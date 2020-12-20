@@ -8,6 +8,12 @@ import matplotlib.pyplot as plt
 from typing import Iterable, NamedTuple, List
 
 
+logging.basicConfig(
+	format='%(asctime)s %(levelname)-8s %(message)s',
+	level=logging.INFO,
+	datefmt='%Y-%m-%d %H:%M:%S')
+
+
 class SummaryStatistics:
 	def __init__(self, v: List[int]):
 		self._mean: float = statistics.mean(v)
