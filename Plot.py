@@ -4,8 +4,7 @@ import json
 import statistics
 from pathlib import Path
 import logging
-import matplotlib.pyplot as plt
-from typing import Iterable, NamedTuple, List
+from typing import List
 
 
 logging.basicConfig(
@@ -18,42 +17,6 @@ class SummaryStatistics:
 	def __init__(self, v: List[int]):
 		self._mean: float = statistics.mean(v)
 		self._median: float = statistics.median(v)
-
-
-class Panel(NamedTuple):
-	xs: Iterable[int]
-	ys: Iterable[int]
-	xlabel: str
-	ylabel: str
-
-
-class Visualizer:
-	MAX_PANEL = 224
-
-	def __init__(self):
-		self._panel = 221
-
-	def get_next_panel_id(self) -> int:
-		if self._panel == self.MAX_PANEL:
-			raise RuntimeError("Cannot visualize more than 4 panels.")
-		res = self._panel
-		self._panel += 1
-		return res
-
-	def add_panel(self, panel: Panel):
-		panel_id = self.get_next_panel_id()
-		plt.subplot(panel_id)
-		plt.plot(panel.xs, panel.ys)
-		plt.xlabel = panel.xlabel
-		plt.ylabel = panel.ylabel
-
-	def show(self, panels: List[Panel]):
-		if len(panels) > 4 or not panels:
-			raise ValueError("Invalid argument")
-		plt.figure()
-		for panel in panels:
-			self.add_panel(panel)
-		plt.show()
 
 
 def _process_file(to_process: Path):
@@ -101,9 +64,6 @@ def _process_file(to_process: Path):
 
 
 if __name__ == '__main__':
-	# viz = Visualizer()
-	# panel = Panel(range(10), range(0, 20, 2), "Ooga", "Booga")
-	# viz.show([panel])
 	OUTPUT = Path("~/university/jump_model_exp/1024_island_out").expanduser()
 	OUTPUT.mkdir(exist_ok=True)
 	BASE_PATH = Path("~/university/jump_model_exp/sixth_iteration").expanduser()
