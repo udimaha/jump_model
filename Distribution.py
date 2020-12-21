@@ -86,7 +86,7 @@ def read_distributions(data_path: Path) -> Tuple[Dict[str, AvgByEdge], AvgJumps]
 			data = json.loads(f.read().decode())
 		edge_len = data["expected_edge_len"]
 		stats = data["island_stats"]
-		average_jumps = round(data["avg_jumps"], 2)
+		average_jumps = float(data["avg_jumps"])
 		total_jumps = data["total_jumps"]
 		jump_stats = avg_jumps.setdefault(edge_len, JumpStats())
 		# assert total_jumps != average_jumps # TODO: Fix this! Shouldn't be equal
@@ -95,7 +95,7 @@ def read_distributions(data_path: Path) -> Tuple[Dict[str, AvgByEdge], AvgJumps]
 		for k, v in stats.items():
 			assert len(v) == 1
 			dist_data = distribution.setdefault(k, {}).setdefault(edge_len, DistData())
-			dist_data.avg_occurrences.append(round(v[0], 1))
+			dist_data.avg_occurrences.append(float(v[0]))
 			dist_data.avg_jumps.append(average_jumps)
 	return distribution, avg_jumps
 
@@ -181,26 +181,31 @@ def plot_distribution(distributions: Dict[str, AvgByEdge], island_sizes: List[in
 		# 		palette=sns.color_palette("Paired", len(island_sizes)), multiple="stack", kde=True)
 			#sns.pairplot(data=data_set, hue="edge_length")
 		for island_size_ in island_sizes:
-			csv_out = Path(tmp_dir, f"out_{island_size_}.csv")
-			with time_func(f"Populating the CSV at {csv_out}"):
-				populate_csv(csv_out, distributions, [island_size_])
-			#data_set = sns.load_dataset(csv_out.name)
-			with time_func("Reading the CSV"):
-				data_set = pd.read_csv(csv_out)
-			for normalize in (True, False):
-				xs = "avg_occurr" if not normalize else "ln_avg_occurr"
-				with time_func("Displaying the dataset:"):
-					sns.displot(
-						data_set, x=xs, hue="edge_length", kind="kde", #kde=True,
-						palette=sns.color_palette("Paired", 10))
-				title = f"island_size_{island_size_}"
-				if normalize:
-					title = "normalized_" + title
-				out_fie = Path(out_dir, f"{title}.png")
-				plt.title(title)
-				plt.savefig(str(out_fie))
+			plot_island_distribution(distributions, island_size_, out_dir, Path(tmp_dir))
 
-		# plt.show()
+	# plt.show()
+
+
+def plot_island_distribution(distributions: Dict[str, AvgByEdge], island_size_: int, out_dir: Path, tmp_dir: Path):
+	csv_out = Path(tmp_dir, f"out_{island_size_}.csv")
+	with time_func(f"Populating the CSV at {csv_out}"):
+		populate_csv(csv_out, distributions, [island_size_])
+	# data_set = sns.load_dataset(csv_out.name)
+	with time_func("Reading the CSV"):
+		data_set = pd.read_csv(csv_out)
+	for normalize in (True, False):
+		xs = "avg_occurr" if not normalize else "ln_avg_occurr"
+		with time_func("Displaying the dataset:"):
+			sns.displot(
+				data_set, x=xs, hue="edge_length", kind="kde",  # kde=True,
+				palette=sns.color_palette("Paired", 10))
+		title = f"island_size_{island_size_}"
+		if normalize:
+			title = "normalized_" + title
+		out_fie = Path(out_dir, f"{title}.png")
+		plt.title(title)
+		plt.savefig(str(out_fie))
+
 
 # assert len(island_sizes) == 4
 	# panels = [make_occurrences_panel(distributions, island) for island in island_sizes]
@@ -253,8 +258,7 @@ if __name__ == '__main__':
 		for expected in ("0.3", "0.6", "0.9"):
 			assert dists[island_size][0.1] != dists[island_size][float(expected)]
 	with time_func("Plotting histogram"):
-		plot_distribution(dists, [factor for factor in range(3, 1024)], OUTPUT_PATH)
-		#plot_distribution(dists, [128], OUTPUT_PATH)
+		plot_distribution(dists, [factor for factor in range(1, 1024)], OUTPUT_PATH)
 	# with time_func("Plotting jumps"):
 	# 	plot_jumps(jumps)
 
