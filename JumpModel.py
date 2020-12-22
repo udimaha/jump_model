@@ -25,8 +25,7 @@ def run_scenarios(
     pattern = f"scale_{scale}_leaves_{leaf_count}_genome_{genome_size}_alpha_{alpha}.json"
     for idx in range(tree_count):
         with time_func(f"Running tree: {idx} of scenario with {leaf_count} leaves, alpha: {alpha} and scale: {scale}"):
-            result = run_scenario(
-                leaf_count, scale, genome_size=genome_size)
+            result = run_scenario(leaf_count, scale, genome_size=genome_size, alpha=alpha)
         output = (base_path / f"{uuid.uuid4()}_{pattern}")
         with gzip.open(str(output.with_suffix(".json.gz")), "w") as f_gz:
             f_gz.write(result.to_json().encode())

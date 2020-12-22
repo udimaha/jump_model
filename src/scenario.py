@@ -188,6 +188,7 @@ class Result(NamedTuple):
     leaves_count: int
     total_jumps: int
     avg_jumps: float
+    alpha: float
     seed: int
     occurrences: Occurrences
 
@@ -200,7 +201,8 @@ class Result(NamedTuple):
             "expected_edge_len": self.expected_edge_len,
             "leaves_count": self.leaves_count,
             "seed": self.seed,
-            "occurrences": json.dumps(self.occurrences)
+            "occurrences": json.dumps(self.occurrences),
+            "alpha": self.alpha
         }
         return json.dumps(data, indent=4)
 
@@ -234,11 +236,11 @@ class Result(NamedTuple):
         return True
 
 
-def run_scenario(size: int, scale: float, genome_size: int) -> Result:
+def run_scenario(size: int, scale: float, genome_size: int, alpha: float) -> Result:
     with time_func("Seeding numpy random"):
         random_seed = int(time.time())
         numpy.random.seed(random_seed)
-        genome_maker = GenomeMaker(random_seed)
+        genome_maker = GenomeMaker(random_seed, alpha)
 
     with time_func("Constructing the Yule tree"):
         res = YuleTreeGenerator(size=size, scale=scale, seed=random_seed).construct()
@@ -261,5 +263,5 @@ def run_scenario(size: int, scale: float, genome_size: int) -> Result:
         occurrences = suffix_tree.occurrences()
     return Result(
         model_tree, genome_size, scale, size, sum(total_jumped), statistics.mean(total_jumped) if total_jumped else 0,
-        random_seed, occurrences
+        alpha, random_seed, occurrences
     )
