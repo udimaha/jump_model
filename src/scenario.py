@@ -234,10 +234,9 @@ class Result(NamedTuple):
         return True
 
 
-def run_scenario(
-    size: int, scale: float, genome_size: int) -> Result:
+def run_scenario(size: int, scale: float, genome_size: int) -> Result:
     with time_func("Seeding numpy random"):
-        random_seed = int(time.time() * 1000000)
+        random_seed = int(time.time())
         numpy.random.seed(random_seed)
         genome_maker = GenomeMaker(random_seed)
 
