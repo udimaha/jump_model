@@ -30,12 +30,12 @@ def merge_files(directory: Path, file_pattern: str, output: Path):
 			assert len(integers) == 1
 			key = int(integers[0])
 			by_key[key] = file
-	steps = len(by_key) / 10
+	step = len(by_key) / 10
 	with time_func("Creating the GIFF"):
 		with imageio.get_writer(output, mode='I') as writer:
-			for index, (_, filename) in sorted(by_key.items()):
-				if index % steps == 0:
-					logging.info("Progress %s percent done", index / steps * 10)
+			for index, (_, filename) in enumerate(sorted(by_key.items())):
+				if index % step == 0:
+					logging.info("Progress %s percent done", (index // step) * 10)
 				image = imageio.imread(filename)
 				writer.append_data(image)
 	with time_func(f"Optimizing giff: {output}"):
@@ -60,5 +60,5 @@ if __name__ == '__main__':
 	assert list(map(str, normalized)) != list(map(str, raw))
 	# Test
 
-	merge_files(visualized_path, pattern, output_path / "island-3-4096.gif")
-	merge_files(visualized_path, normalized_pattern, output_path / "norm-island-3-4096.gif")
+	merge_files(visualized_path, pattern, output_path / "island-4096.gif")
+	merge_files(visualized_path, normalized_pattern, output_path / "norm-island-4096.gif")
