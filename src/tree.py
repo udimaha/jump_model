@@ -121,13 +121,13 @@ class TreeView(NamedTuple):
 class YuleTreeGenerator:  # TODO: Calculate average branch length, assert that it is as expected
     FLOATING_PNT_DIGITS = 5
 
-    def __init__(self, size: int, scale: float):
+    def __init__(self, size: int, scale: float, seed: int):
         if scale <= 0:
             raise ValueError("scale must be a positive number")
         # if size != 1 and size % 2 != 0:
         #     raise ValueError("size must be an even number")
 
-        self._rndm_gen = default_rng()
+        self._rndm_gen = default_rng(seed)
         self._size = size
         self._scale = scale
         self._leaves: List[TreeNode] = []

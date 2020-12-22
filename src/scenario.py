@@ -18,10 +18,8 @@ from .tree import TreeNode, BranchLenStats, YuleTreeGenerator
 
 
 def fill_genome(
-        node: TreeNode, genome_size: int, total_jumped: Optional[List[int]], maker: Optional[GenomeMaker] = None):
+        node: TreeNode, genome_size: int, total_jumped: Optional[List[int]], maker: GenomeMaker):
     assert total_jumped is not None
-    if not maker:
-        maker = GenomeMaker()
     if node.father is None:
         identity_genome = make_identity_genome(genome_size)
         node.genome = identity_genome
@@ -93,16 +91,17 @@ class OldResult(NamedTuple):
 
 def run_scenario_old(
     size: int, scale: float, neighborhood_size: int, genome_size: int,
-        genome_maker: Optional[GenomeMaker] = None) -> OldResult:
+        genome_maker: GenomeMaker) -> OldResult:
     with time_func("Constructing the Yule tree"):
-        res = YuleTreeGenerator(size=size, scale=scale).construct()
+        res = YuleTreeGenerator(size=size, scale=scale, seed=genome_maker.seed).construct()
     with time_func("Get branch statistics"):
         branch_stats = res.root.branch_len_stats()
     logging.info(
         "Branch count: %s avg: %s median: %s expected: %s", branch_stats.count,
         branch_stats.average, branch_stats.median, scale)
+    total_jumped = []
     with time_func(f"Filling genome, size: {genome_size}"):
-        fill_genome(res.root, genome_size=genome_size, maker=genome_maker)
+        fill_genome(res.root, genome_size=genome_size, maker=genome_maker, total_jumped=total_jumped)
     assert len(res.leaves) == size
 
     leaves_matrix = {}
@@ -236,14 +235,14 @@ class Result(NamedTuple):
 
 
 def run_scenario(
-    size: int, scale: float, genome_size: int,
-        genome_maker: Optional[GenomeMaker] = None) -> Result:
+    size: int, scale: float, genome_size: int) -> Result:
     with time_func("Seeding numpy random"):
         random_seed = int(time.time())
         numpy.random.seed(random_seed)
+        genome_maker = GenomeMaker(random_seed)
 
     with time_func("Constructing the Yule tree"):
-        res = YuleTreeGenerator(size=size, scale=scale).construct()
+        res = YuleTreeGenerator(size=size, scale=scale, seed=random_seed).construct()
     with time_func("Get branch statistics"):
         branch_stats = res.root.branch_len_stats()
     logging.info(

@@ -57,8 +57,13 @@ def make_identity_genome(size: int) -> Genome:
 
 
 class GenomeMaker:
-    def __init__(self):
-        self._rndm_gen = default_rng()
+    def __init__(self, seed: int):
+        self._seed = seed
+        self._rndm_gen = default_rng(seed)
+
+    @property
+    def seed(self):
+        return self._seed
 
     def make(self, genome: Genome, scale: float) -> Tuple[int, Genome]:
         assert scale != 0
@@ -91,14 +96,14 @@ class GenomeMaker:
 
 
 def test_genome_maker():
-    genome_maker = GenomeMaker()
+    genome_maker = GenomeMaker(1)
     genome = make_identity_genome(20)
     for i in range(10):
         print(f"Iteration {i}: {genome_maker.make(genome, scale=0.3)}")
 
 
 def test_get_neighbourhood():
-    genome_maker = GenomeMaker()
+    genome_maker = GenomeMaker(1)
     gene = 1
     genome = make_identity_genome(20)
     print(f"Original genome: {genome} neighborhood: {genome.get_neighbourhood(gene, 5)}")
