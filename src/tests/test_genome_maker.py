@@ -86,6 +86,17 @@ def test_get_occupied_by_jumps(new_positions: NewPositions, expected: List[Genom
             ({0: [GenomeSegment(0, 32)]}, {}),  # Everything jumped together
             ({i: [GenomeSegment(31-i, 1)] for i in range(32)}, {}),  # Everything jumps independently
             ({16: [GenomeSegment(0, 16)]}, {0: GenomeSegment(16, 16)}),
+            (
+                    {16: [GenomeSegment(0, 16), GenomeSegment(20, 2)]}, {0: GenomeSegment(start=16, size=4), 4: GenomeSegment(start=22, size=10)}
+            ),
+            (
+                    {16: [GenomeSegment(0, 16), GenomeSegment(20, 2)]},
+                    {0: GenomeSegment(start=16, size=4), 4: GenomeSegment(start=22, size=10)}
+            ),
+            (
+                    {28: [GenomeSegment(16, 3), GenomeSegment(20, 1)]},
+                    {0: GenomeSegment(start=0, size=16), 16: GenomeSegment(start=19, size=1), 17: GenomeSegment(start=21, size=11)}
+            ),
             ({0: [GenomeSegment(0, 16)]}, {16: GenomeSegment(16, 16)}),
             (
                 {2: [GenomeSegment(15, 1), GenomeSegment(17, 1)]},
@@ -117,7 +128,12 @@ def test_gather_stayed(new_positions: NewPositions, expected: Stayed):
                 {2: [GenomeSegment(1, 1), GenomeSegment(4, 3)]},
                 {0: GenomeSegment(0, 1), 1: GenomeSegment(2, 1), 6: GenomeSegment(3, 1)},
                 [(0, 1), (2, 1), (1, 1), (4, 3), (3, 1)]
-            )
+            ),
+            (
+                {16: [GenomeSegment(0, 16), GenomeSegment(20, 2)]},
+                {0: GenomeSegment(start=16, size=4), 4: GenomeSegment(start=22, size=10)},
+                [(16, 4), (22, 10), (0, 16), (20, 2)]
+            ),
         ]
 ))
 def test_build_new_genome(new_positions: NewPositions, stayed: Stayed, expected: List[GenomeSegment]):
