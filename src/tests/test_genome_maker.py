@@ -97,6 +97,10 @@ def test_get_occupied_by_jumps(new_positions: NewPositions, expected: List[Genom
                     {28: [GenomeSegment(16, 3), GenomeSegment(20, 1)]},
                     {0: GenomeSegment(start=0, size=16), 16: GenomeSegment(start=19, size=1), 17: GenomeSegment(start=21, size=11)}
             ),
+            (
+                    {16: [GenomeSegment(0, 16)], 17: [GenomeSegment(20, 2)]},
+                    {0: GenomeSegment(start=16, size=4), 4: GenomeSegment(start=22, size=10)}
+            ),
             ({0: [GenomeSegment(0, 16)]}, {16: GenomeSegment(16, 16)}),
             (
                 {2: [GenomeSegment(15, 1), GenomeSegment(17, 1)]},
