@@ -38,7 +38,7 @@ class Scale(NamedTuple):
 
     def validate(self):
         assert self.begin < self.end <= 1
-        assert self.step < 1 and self.begin + self.step <= self.end
+        assert self.step < 1 and round(self.begin + self.step, ndigits=2) <= self.end
 
 
 class Configuration(NamedTuple):
