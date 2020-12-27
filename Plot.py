@@ -57,8 +57,10 @@ def _process_file(to_process: Path):
 				"leaves_count": leaves,
 				"expected_edge_len": expected_edge,
 				"island_stats": island_data,
-				"total_jumps": data['total_jumps'],
-				"avg_jumps": data['avg_jumps'],
+				"total_jumps": data["total_jumps"],
+				"avg_jumps": data["avg_jumps"],
+				"alpha": data["alpha"],
+				"seed": data["seed"]
 			}
 		f.write(json.dumps(data).encode())
 
