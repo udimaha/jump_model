@@ -1,5 +1,5 @@
 {
-  "data_path": "~/jump_model/data/genes",
-  "output_path": "~/jump_model/data/distributions",
+  "data": "~/jump_model/data/genes",
+  "output": "~/jump_model/data/distributions",
   "file_pattern": "*.gz"
 }
