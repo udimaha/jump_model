@@ -4,8 +4,8 @@ import json
 import statistics
 from pathlib import Path
 import logging
-from typing import List
-
+import fire
+from typing import List, NamedTuple
 
 logging.basicConfig(
 	format='%(asctime)s %(levelname)-8s %(message)s',
@@ -19,9 +19,7 @@ class SummaryStatistics:
 		self._median: float = statistics.median(v)
 
 
-def _process_file(to_process: Path):
-	output = OUTPUT / to_process.name
-	assert not output.exists()
+def _process_file(output: Path, to_process: Path):
 	island_data = {}
 	start = time.monotonic()
 	with gzip.open(str(to_process), "r") as f:
@@ -53,23 +51,56 @@ def _process_file(to_process: Path):
 		logging.warning("FOUND NO REPETITIONS FOR ANY K!")
 	with gzip.open(str(output), "w") as f:
 		data = {
-				"genome_size": genome_size,
-				"leaves_count": leaves,
-				"expected_edge_len": expected_edge,
-				"island_stats": island_data,
-				"total_jumps": data["total_jumps"],
-				"avg_jumps": data["avg_jumps"],
-				"alpha": data["alpha"],
-				"seed": data["seed"]
-			}
+			"genome_size": genome_size,
+			"leaves_count": leaves,
+			"expected_edge_len": expected_edge,
+			"island_stats": island_data,
+			"total_jumps": data["total_jumps"],
+			"avg_jumps": data["avg_jumps"],
+			"alpha": data["alpha"],
+			"seed": data["seed"]
+		}
 		f.write(json.dumps(data).encode())
 
 
-if __name__ == '__main__':
-	OUTPUT = Path("~/university/jump_model_exp/1024_island_out").expanduser()
-	OUTPUT.mkdir(exist_ok=True)
-	BASE_PATH = Path("~/university/jump_model_exp/sixth_iteration").expanduser()
-	data_files = list(filter(lambda x: not (OUTPUT / x.name).exists(), BASE_PATH.glob("*.json")))
+class Configuration(NamedTuple):
+	data_folder: Path
+	output_folder: Path
+	file_pattern: str
+
+	def validate(self):
+		assert self.data_folder.is_dir()
+		assert next(self.data_folder.iterdir(), None) is not None
+
+
+def parse_configuration(config_path: Path) -> Configuration:
+	assert config_path.is_file(), f"Configuration file not found at: [{config_path}]"
+	with config_path.open("r") as f:
+		configuration = json.load(f)
+
+	def get_conf_val(key: str, default=None):
+		if key not in configuration:
+			if default:
+				return default
+			raise KeyError(f"Invalid configuration! Missing key: [{key}]")
+		return configuration[key]
+
+	data_path = get_conf_val("data")
+	output_path = get_conf_val("output")
+	file_pattern = get_conf_val("file_pattern", "*.gz")
+	return Configuration(
+		data_folder=Path(data_path).expanduser(), output_folder=Path(output_path).expanduser(), file_pattern=file_pattern)
+
+
+def main(config: str):
+	config_path = Path(config).expanduser()
+	configuration = parse_configuration(config_path)
+	configuration.validate()
+	configuration.output_folder.mkdir(exist_ok=True)
+	data_files = list(
+		filter(
+			lambda x: not (configuration.output_folder / x.name).exists(),
+			configuration.data_folder.glob(configuration.file_pattern)))
 	logging.info("Going over %s data files!", len(data_files))
 	last_reported = 0
 	step = len(data_files) // 10
@@ -78,8 +109,13 @@ if __name__ == '__main__':
 			logging.info("Processed %s%", index // step * 10)
 			last_reported = index
 		try:
-			_process_file(data_file)
+			output = configuration.output_folder / data_file.name
+			assert not output.exists()
+			_process_file(output, data_file)
 		except Exception:
 			logging.exception("oops")
 	logging.info("DONE :)")
-#     # fire.Fire(main)
+
+
+if __name__ == '__main__':
+	fire.Fire(main)
