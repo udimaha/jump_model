@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import gzip
 import numpy as np
+import fire
 import pandas as pd
 
 from src.time_func import time_func
@@ -167,29 +168,22 @@ def plot_jumps(average_jumps: AvgJumps):
 	# viz.show(panels)
 
 
-def plot_distribution(distributions: Dict[str, AvgByEdge], island_sizes: List[int], out_dir: Path):
-	viz = HistogramVisualizer()
+class PlotData(NamedTuple):
+	distributions: Dict[str, AvgByEdge]
+	out_dir: Path
+	lambdas: int
+
+
+def plot_distribution(data: PlotData, island_sizes: List[int]):
 	with TemporaryDirectory() as tmp_dir:
-		# csv_out = Path(tmp_dir, f"out.csv")
-		# with time_func(f"Populating the CSV at {csv_out}"):
-		# 	populate_csv(csv_out, distributions, island_sizes)
-		# with time_func("Reading the CSV"):
-		# 	data_set = pd.read_csv(csv_out)
-		# with time_func("Displaying the dataset:"):
-		# 	sns.displot(
-		# 		data_set, x="avg_occurr", hue="island_size", col="edge_length",
-		# 		palette=sns.color_palette("Paired", len(island_sizes)), multiple="stack", kde=True)
-			#sns.pairplot(data=data_set, hue="edge_length")
 		for island_size_ in island_sizes:
-			plot_island_distribution(distributions, island_size_, out_dir, Path(tmp_dir))
-
-	# plt.show()
+			plot_island_distribution(data, island_size_, Path(tmp_dir))
 
 
-def plot_island_distribution(distributions: Dict[str, AvgByEdge], island_size_: int, out_dir: Path, tmp_dir: Path):
+def plot_island_distribution(data: PlotData, island_size_: int, tmp_dir: Path):
 	csv_out = Path(tmp_dir, f"out_{island_size_}.csv")
 	with time_func(f"Populating the CSV at {csv_out}"):
-		populate_csv(csv_out, distributions, [island_size_])
+		populate_csv(csv_out, data.distributions, [island_size_])
 	# data_set = sns.load_dataset(csv_out.name)
 	with time_func("Reading the CSV"):
 		data_set = pd.read_csv(csv_out)
@@ -198,11 +192,11 @@ def plot_island_distribution(distributions: Dict[str, AvgByEdge], island_size_: 
 		with time_func("Displaying the dataset:"):
 			sns.displot(
 				data_set, x=xs, hue="edge_length", kind="kde",  # kde=True,
-				palette=sns.color_palette("Paired", 10))
+				palette=sns.color_palette("Paired", data.lambdas))
 		title = f"island_size_{island_size_}"
 		if normalize:
 			title = "normalized_" + title
-		out_fie = Path(out_dir, f"{title}.png")
+		out_fie = Path(data.out_dir, f"{title}.png")
 		plt.title(title)
 		plt.savefig(str(out_fie))
 
@@ -239,30 +233,23 @@ def populate_csv(csv_out: Path, distributions: Dict[str, AvgByEdge], island_size
 					sample_id += 1
 
 
-if __name__ == '__main__':
+def main(
+		data_path: Path = Path("~/university/jump_model_exp/4096_island_out/distributions").expanduser(),
+		output_path: Path = Path("~/university/jump_model_exp/4096_island_out/visualized").expanduser(),
+		lamdas: int = 6):
 	sns.set()
-	# data = np.random.multivariate_normal([0, 0], [[5, 2], [2, 2]], size=2000)
-	# data = pd.DataFrame(data, columns=['x', 'y'])
-	#
-	# for col in 'xy':
-	# 	plt.hist(data[col], cumulative=True, alpha=0.5)
-	# plt.show()
-	# exit()
-	DATA_PATH = Path("~/university/jump_model_exp/4096_island_out/distributions").expanduser()
-	assert DATA_PATH.exists() and DATA_PATH.is_dir()
-	OUTPUT_PATH = Path("~/university/jump_model_exp/4096_island_out/visualized").expanduser()
-	OUTPUT_PATH.mkdir(exist_ok=True)
-	with time_func(f"Reading distributions from {DATA_PATH}"):
-		dists, jumps = read_distributions(DATA_PATH)
-	for island_size in ("8", "16", "32", "64"):
-		for expected in ("0.3", "0.6", "0.9"):
-			assert dists[island_size][0.1] != dists[island_size][float(expected)]
+	assert data_path.exists() and data_path.is_dir()
+	output_path.mkdir(exist_ok=True)
+	with time_func(f"Reading distributions from {data_path}"):
+		dists, jumps = read_distributions(data_path)
+	data = PlotData(
+		distributions=dists,
+		out_dir=output_path,
+		lambdas=lamdas
+	)
 	with time_func("Plotting histogram"):
-		plot_distribution(dists, [factor for factor in range(1, 1024)], OUTPUT_PATH)
-	# with time_func("Plotting jumps"):
-	# 	plot_jumps(jumps)
+		plot_distribution(data, [size for size in range(1, 1024)])
 
 
-# viz = HistogramVisualizer()
-# panel = Panel(range(10), range(0, 20, 2), "Ooga", "Booga")
-# viz.show([panel])
+if __name__ == '__main__':
+	fire.Fire(main)

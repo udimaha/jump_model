@@ -46,7 +46,7 @@ def merge_files(directory: Path, file_pattern: str, output: Path):
 
 
 if __name__ == '__main__':
-	output_path = Path("~/university/jump_model_exp/").expanduser()
+	output_path = Path("~/university/jump_model_exp/visualized").expanduser()
 	visualized_path = Path("~/university/jump_model_exp/4096_island_out/visualized/").expanduser()
 	assert visualized_path.is_dir()
 	normalized_pattern = "normalized_*.png"
@@ -60,5 +60,5 @@ if __name__ == '__main__':
 	assert list(map(str, normalized)) != list(map(str, raw))
 	# Test
 
-	merge_files(visualized_path, pattern, output_path / "island-4096.gif")
-	merge_files(visualized_path, normalized_pattern, output_path / "norm-island-4096.gif")
+	merge_files(visualized_path, pattern, output_path / "island-4096-alpha-1.gif")
+	merge_files(visualized_path, normalized_pattern, output_path / "norm-island-4096-alpha-1.gif")
