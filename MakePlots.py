@@ -234,7 +234,7 @@ def populate_csv(csv_out: Path, distributions: Dict[str, AvgByEdge], island_size
 
 
 def main(
-		data_path: Path = Path("~/university/jump_model_exp/4096_island_out/distributions").expanduser(),
+		data_path: Path = Path("~/university/jump_model_exp/4096_island_out/distributions_alpha75").expanduser(),
 		output_path: Path = Path("~/university/jump_model_exp/4096_island_out/visualized").expanduser(),
 		lamdas: int = 6):
 	sns.set()
