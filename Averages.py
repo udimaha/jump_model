@@ -106,7 +106,7 @@ def main(config: str):
 	step = len(data_files) // 10
 	for index, data_file in enumerate(data_files):
 		if index - last_reported > step:
-			logging.info("Processed %s%", index // step * 10)
+			logging.info("Processed %s percent", index // step * 10)
 			last_reported = index
 		try:
 			output = configuration.output_folder / data_file.name
