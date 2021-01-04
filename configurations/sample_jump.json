@@ -4,5 +4,6 @@
   "alpha": 1,
   "genome_size": 4096,
   "leaf_count": 256,
+  "processes": 20,
   "scale": [0.1, 0.6, 0.1]
 }
