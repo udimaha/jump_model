@@ -24,7 +24,7 @@ MAX_PROCESSES = 20
 
 
 def run_sigle_job(
-        pattern: str, leaf_count: int, scale: float, base_path: Path, alpha: float, tree_count: int, genome_size: int, idx: int):
+        pattern: str, leaf_count: int, scale: float, base_path: Path, alpha: float, genome_size: int, idx: int):
     assert pattern
     with time_func(f"Running tree: {idx} of scenario with {leaf_count} leaves, alpha: {alpha} and scale: {scale}"):
         result = run_scenario(leaf_count, scale, genome_size=genome_size, alpha=alpha)
@@ -41,7 +41,7 @@ def run_scenarios(
     with futures.ThreadPoolExecutor(max_workers=processes) as executor:
         jobs = [
             executor.submit(
-                run_sigle_job, pattern, leaf_count, scale, base_path, alpha, tree_count, genome_size, idx)
+                run_sigle_job, pattern, leaf_count, scale, base_path, alpha, genome_size, idx)
             for idx in range(tree_count)]
         for job in futures.as_completed(jobs):
             try:
