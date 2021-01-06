@@ -2,6 +2,7 @@ import gzip
 import time
 import json
 import statistics
+from concurrent import futures
 from pathlib import Path
 import logging
 import fire
@@ -11,6 +12,9 @@ logging.basicConfig(
 	format='%(asctime)s %(levelname)-8s %(message)s',
 	level=logging.INFO,
 	datefmt='%Y-%m-%d %H:%M:%S')
+
+
+MAX_PROCESSES = 20
 
 
 class SummaryStatistics:
@@ -67,10 +71,12 @@ class Configuration(NamedTuple):
 	data_folder: Path
 	output_folder: Path
 	file_pattern: str
+	processes: int
 
 	def validate(self):
 		assert self.data_folder.is_dir()
 		assert next(self.data_folder.iterdir(), None) is not None
+		assert 0 < self.processes <= MAX_PROCESSES
 
 
 def parse_configuration(config_path: Path) -> Configuration:
@@ -87,9 +93,11 @@ def parse_configuration(config_path: Path) -> Configuration:
 
 	data_path = get_conf_val("data")
 	output_path = get_conf_val("output")
+	processes = int(get_conf_val("processes"))
 	file_pattern = get_conf_val("file_pattern", "*.gz")
 	return Configuration(
-		data_folder=Path(data_path).expanduser(), output_folder=Path(output_path).expanduser(), file_pattern=file_pattern)
+		data_folder=Path(data_path).expanduser(), output_folder=Path(output_path).expanduser(),
+		file_pattern=file_pattern, processes=processes)
 
 
 def main(config: str):
@@ -102,18 +110,21 @@ def main(config: str):
 			lambda x: not (configuration.output_folder / x.name).exists(),
 			configuration.data_folder.glob(configuration.file_pattern)))
 	logging.info("Going over %s data files!", len(data_files))
-	last_reported = 0
-	step = len(data_files) // 10
-	for index, data_file in enumerate(data_files):
-		if index - last_reported > step:
-			logging.info("Processed %s percent", index // step * 10)
-			last_reported = index
-		try:
-			output = configuration.output_folder / data_file.name
-			assert not output.exists()
-			_process_file(output, data_file)
-		except Exception:
-			logging.exception("oops")
+	with futures.ThreadPoolExecutor(max_workers=configuration.processes) as executor:
+		jobs = []
+		for data_file in data_files:
+			try:
+				output = configuration.output_folder / data_file.name
+				assert not output.exists()
+				jobs.append(executor.submit(_process_file, output, data_file))
+			except Exception:
+				logging.exception("oops")
+		assert jobs, "No jobs to run!"
+		for job in futures.as_completed(jobs):
+			try:
+				job.result()
+			except Exception as e:
+				logging.exception("Failed running job!!!")
 	logging.info("DONE :)")
 
 

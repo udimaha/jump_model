@@ -1,5 +1,6 @@
 {
   "data": "~/jump_model/data/genes",
   "output": "~/jump_model/data/distributions",
-  "file_pattern": "*.gz"
+  "file_pattern": "*.gz",
+  "processes": 20
 }
