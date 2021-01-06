@@ -94,7 +94,7 @@ def parse_configuration(config_path: Path) -> Configuration:
     genome_size = get_conf_val("genome_size")
     leaf_count = get_conf_val("leaf_count")
     processes = get_conf_val("processes")
-    scale = Scale(*get_conf_val("scale"))
+    scale = Scale(*map(lambda x: round(x, 2), get_conf_val("scale")))
     return Configuration(
         data_path=Path(data_path).expanduser(), tree_count=tree_count, alpha=alpha,
         genome_size=genome_size, leaf_count=leaf_count, processes=processes, scale=scale
