@@ -88,12 +88,12 @@ def parse_configuration(config_path: Path) -> Configuration:
             raise KeyError(f"Invalid configuration! Missing key: [{key}]")
         return configuration[key]
 
-    tree_count = get_conf_val("tree_count")
+    tree_count = int(get_conf_val("tree_count"))
     data_path = get_conf_val("data_path")
-    alpha = get_conf_val("alpha")
-    genome_size = get_conf_val("genome_size")
-    leaf_count = get_conf_val("leaf_count")
-    processes = get_conf_val("processes")
+    alpha = float(get_conf_val("alpha"))
+    genome_size = int(get_conf_val("genome_size"))
+    leaf_count = int(get_conf_val("leaf_count"))
+    processes = int(get_conf_val("processes"))
     scale = Scale(*map(lambda x: round(x, 2), get_conf_val("scale")))
     return Configuration(
         data_path=Path(data_path).expanduser(), tree_count=tree_count, alpha=alpha,
