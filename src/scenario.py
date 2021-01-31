@@ -1,8 +1,11 @@
+import csv
 import json
 import logging
 import statistics
 import struct
 import time
+from pathlib import Path
+
 import numpy.random
 from math import isclose
 from typing import Optional, NamedTuple, Dict, List, Tuple
@@ -265,3 +268,26 @@ def run_scenario(size: int, scale: float, genome_size: int, alpha: float) -> Res
         model_tree, genome_size, scale, size, sum(total_jumped), statistics.mean(total_jumped) if total_jumped else 0,
         alpha, random_seed, occurrences
     )
+
+
+def read_real_data(
+        data_dir: Path, name_key: str = "Cog",
+        field_names: Tuple[str] = ("Taxid", "Gene name", "Contig", "Srnd", "Start", "Stop", "Length", "Cog")
+) -> Occurrences:
+    names = {}
+    genomes = []
+    for file in data_dir.iterdir():
+        genome = []
+        with file.open("r") as csvfile:
+            reader = csv.DictReader(csvfile, fieldnames=field_names)
+            next(reader)  # Skip header
+            for line in reader:
+                name = line[name_key]
+                if name not in names:
+                    names[name] = len(names)
+                gene_id = names[name]
+                genome.append(gene_id)
+        genomes.append(genome)
+    suffix_tree = STree([''.join(map(chr, genome)) for genome in genomes])
+    with time_func("Counting occurrences"):
+        return suffix_tree.occurrences()

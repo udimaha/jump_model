@@ -5,7 +5,7 @@ import gzip
 import json
 from concurrent import futures
 from pathlib import Path
-from typing import Optional, NamedTuple
+from typing import NamedTuple
 import uuid
 
 import fire
@@ -23,7 +23,7 @@ logging.basicConfig(
 MAX_PROCESSES = 20
 
 
-def run_sigle_job(
+def run_single_job(
         pattern: str, leaf_count: int, scale: float, base_path: Path, alpha: float, genome_size: int, idx: int):
     assert pattern
     with time_func(f"Running tree: {idx} of scenario with {leaf_count} leaves, alpha: {alpha} and scale: {scale}"):
@@ -41,7 +41,7 @@ def run_scenarios(
     with futures.ThreadPoolExecutor(max_workers=processes) as executor:
         jobs = [
             executor.submit(
-                run_sigle_job, pattern, leaf_count, scale, base_path, alpha, genome_size, idx)
+                run_single_job, pattern, leaf_count, scale, base_path, alpha, genome_size, idx)
             for idx in range(tree_count)]
         for job in futures.as_completed(jobs):
             try:

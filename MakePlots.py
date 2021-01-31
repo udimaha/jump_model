@@ -234,9 +234,9 @@ def populate_csv(csv_out: Path, distributions: Dict[str, AvgByEdge], island_size
 
 
 def main(
-		data_path: Path = Path("~/university/jump_model_exp/4096_island_out/distributions_alpha75").expanduser(),
+		data_path: Path = Path("~/university/jump_model_exp/4096_island_out/distributions_alpha_50").expanduser(),
 		output_path: Path = Path("~/university/jump_model_exp/4096_island_out/visualized").expanduser(),
-		lamdas: int = 6):
+		edge_lengths: int = 9):
 	sns.set()
 	assert data_path.exists() and data_path.is_dir()
 	output_path.mkdir(exist_ok=True)
@@ -245,7 +245,7 @@ def main(
 	data = PlotData(
 		distributions=dists,
 		out_dir=output_path,
-		lambdas=lamdas
+		lambdas=edge_lengths
 	)
 	with time_func("Plotting histogram"):
 		plot_distribution(data, [size for size in range(1, 1024)])

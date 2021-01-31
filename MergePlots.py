@@ -59,6 +59,6 @@ if __name__ == '__main__':
 	assert len(normalized) > 0
 	assert list(map(str, normalized)) != list(map(str, raw))
 	# Test
-
-	merge_files(visualized_path, pattern, output_path / "island-4096-alpha-1.gif")
-	merge_files(visualized_path, normalized_pattern, output_path / "norm-island-4096-alpha-1.gif")
+	name = "island-4096-small-branches-alpha-50.gif"
+	merge_files(visualized_path, pattern, output_path / name)
+	merge_files(visualized_path, normalized_pattern, output_path / f"norm-{name}")
