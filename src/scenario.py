@@ -277,7 +277,7 @@ def read_real_data(
     names = {}
     genomes = []
     for file in data_dir.iterdir():
-        genome = []
+        genome = ""
         with file.open("r") as csvfile:
             reader = csv.DictReader(csvfile, fieldnames=field_names)
             next(reader)  # Skip header
@@ -286,8 +286,13 @@ def read_real_data(
                 if name not in names:
                     names[name] = len(names)
                 gene_id = names[name]
-                genome.append(gene_id)
-        genomes.append(genome)
-    suffix_tree = STree([''.join(map(chr, genome)) for genome in genomes])
-    with time_func("Counting occurrences"):
+                try:
+                    genome += chr(gene_id)
+                except ValueError:
+                    genome = None
+                    break
+        if genome is not None:
+            genomes.append(genome)
+    suffix_tree = STree(genomes)
+    with time_func(f"Counting occurrences for {len(genomes)} trees!"):
         return suffix_tree.occurrences()
