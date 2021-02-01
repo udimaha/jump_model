@@ -277,9 +277,10 @@ def read_real_data(
 ) -> Occurrences:
     names = {}
     genomes = []
-    for file in data_dir.iterdir():
+    for file_ in data_dir.iterdir():
         genome = []
-        with file.open("r") as csvfile:
+        sizes = []
+        with file_.open("r") as csvfile:
             reader = csv.DictReader(csvfile, fieldnames=field_names)
             next(reader)  # Skip header
             for line in reader:
@@ -287,13 +288,12 @@ def read_real_data(
                 if name not in names:
                     names[name] = len(names)
                 gene_id = names[name]
-                try:
-                    genome += [gene_id]
-                except ValueError:
-                    genome = None
-                    break
+                genome += [gene_id]
         if genome is not None:
+            logging.info("Done parsing genome: %s genome size is: %d", file_, len(genome))
+            sizes.append(len(genome))
             genomes.append(genome)
     suffix_tree = STree(genomes)
-    with time_func(f"Counting occurrences for {len(genomes)} trees!"):
+    with time_func(f"Counting occurrences for {len(genomes)} genomes!"):
+        logging.info("Smallest geome is: %d longest geome is: %d average genome is: %d median genome is: %d", min(sizes), max(sizes), statistics.mean(sizes), statistics.median())
         return suffix_tree.occurrences()
