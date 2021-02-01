@@ -293,7 +293,8 @@ def read_real_data(
             logging.info("Done parsing genome: %s genome size is: %d", file_, len(genome))
             sizes.append(len(genome))
             genomes.append(genome)
-    suffix_tree = STree(genomes)
+    with time_func(f"Constructing the suffix tree for {len(genomes)} genomes!"):
+        suffix_tree = STree(genomes)
     with time_func(f"Counting occurrences for {len(genomes)} genomes!"):
         logging.info("Smallest geome is: %d longest geome is: %d average genome is: %d median genome is: %d", min(sizes), max(sizes), statistics.mean(sizes), statistics.median())
         return suffix_tree.occurrences()
