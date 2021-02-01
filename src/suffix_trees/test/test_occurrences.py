@@ -69,21 +69,16 @@ def _superset(string: List[int]) -> List[List[int]]:
 
 
 def test_specific():
-	string = list(range(11)) # "abcdefghijk"
+	string = list(range(11))
 	strings = _superset(string)
 	assert_algo(strings, False)
-	strings.append(string + [100,101,102])
+	strings.append(string + [100, 101, 102])
 	assert_algo(strings, False)
-	strings.append(string + [80,81,82,83])
+	strings.append(string + [80, 81, 82, 83])
 	assert_algo(strings, False)
 
 
-# @pytest.mark.skip(reason="Currently fails for repeating input")
-# def test_repeated():
-# 	# string = ''.join(["abcdefghijk"] * 2)
-# 	string = ''.join(["abcd"] * 2)
-# 	strings = _superset(string)
-# 	assert_algo(strings, False)
-
-#
-
+def test_repeated():
+	string = list(range(30)) * 6
+	strings = _superset(string)
+	assert_algo(strings, False)

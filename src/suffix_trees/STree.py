@@ -108,6 +108,7 @@ class STree:
         self._generalized_word_starts(xs)
         self._build(_xs)
         self.root.traverse(self._label_generalized)
+        self.root.get_occurrences()
 
     def _label_generalized(self, node: "SNode"):
         """Helper method that labels the nodes of GST with indexes of strings
@@ -140,32 +141,15 @@ class STree:
         if node in self._visited:
             return True
         self._visited.add(node)
-        # count = 0
-        # for key, node in node.transition_links.items():
-        #     if key in self._terminals:
-        #         count += 1
-        #     else:
-        #         count += len(node.generalized_idxs)
-        # non_leaf_links = [node_ for node_ in node.transition_links.values() if node.segment]
-        count = len(node.generalized_idxs)
-        # if non_leaf_links:
-        #     extra = sum(len(node_.generalized_idxs) for node_ in non_leaf_links)
-        #     # if extra > 1:
-        #     #     raise ValueError(f"NODE: {node.branch} HAS CHILDREN: {non_leaf_links}")
-        #     count += extra
-        if count <= 1:  # TODO: Test how much does this improve performance-wise
+        count = node.get_occurrences()
+        assert count > 0
+        if count == 1:  # TODO: Test how much does this improve performance-wise
             return False
         island = self._get_branch(node)  # node.branch
-        #assert node.segment not in self._terminals, f"COUNT IS: {count} SEGMENT: {node.segment} NODE IS: {node.branch}"  # The leaf will only have the suffix character
-        # print(f"Counting node {node} for island: {island}")
-        # end_sub_island = self._get_branch(node.suffix_link)
-        # assert island.endswith(end_sub_island), f"Island is: {island} sub-island is: {end_sub_island}, suffix link is: {node.suffix_link}"
         start_sub_island = self._get_branch(node.parent)
         assert starts_with(island, start_sub_island), f"Island is: {island} sub-island is: {start_sub_island} parent is: {node.parent}"
-        # end_gap = len(island) - len(end_sub_island)
         start_gap = len(island) - len(start_sub_island)
-        # print(f"Found correct sub-islands for {island}, start: {start_sub_island} end: {end_sub_island}")
-        for gap_index in (start_gap,):# end_gap):
+        for gap_index in (start_gap,):
             for gap in range(1, gap_index):
                 key = len(island) - gap
                 self._occurences.setdefault(key, []).append(count)
@@ -266,7 +250,8 @@ class STree:
 
 
 class SNode:
-    __slots__ = ['_suffix_link', 'transition_links', 'idx', 'depth', 'parent', 'generalized_idxs']
+    __slots__ = [
+        '_suffix_link', 'transition_links', 'idx', 'depth', 'parent', 'generalized_idxs', 'occurrences']
 
     """Class representing a Node in the Suffix tree."""
 
@@ -279,6 +264,7 @@ class SNode:
         self.depth = depth
         self.parent: "SNode" = parent
         self.generalized_idxs = set()
+        self.occurrences = 0
 
     def __str__(self):
         if self.is_root:
@@ -294,6 +280,15 @@ class SNode:
                 # " parent: " + my_parent #+
         #        " depth:" + str(self.depth)
         )
+
+    def get_occurrences(self) -> int:
+        if self.occurrences != 0:
+            return self.occurrences
+        if self.is_leaf():
+            self.occurrences = len(self.generalized_idxs)
+        else:
+            self.occurrences = sum(node.get_occurrences() for node in self.transition_links.values())
+        return self.occurrences
 
     @property
     def is_root(self) -> bool:
