@@ -1,4 +1,5 @@
 import csv
+import itertools
 import json
 import logging
 import statistics
@@ -261,7 +262,7 @@ def run_scenario(size: int, scale: float, genome_size: int, alpha: float) -> Res
     newick = res.root.to_newick()
     internal_branches_orig = len([c for c in newick if c == ')']) - 1
     model_tree = TreeDesc(newick, internal_branches_orig, branch_stats)
-    suffix_tree = STree([''.join(map(chr, leaf.genome.genes)) for leaf in res.leaves])
+    suffix_tree = STree(list(itertools.chain.from_iterable(leaf.genome.genes for leaf in res.leaves)))
     with time_func("Counting occurrences"):
         occurrences = suffix_tree.occurrences()
     return Result(
@@ -277,7 +278,7 @@ def read_real_data(
     names = {}
     genomes = []
     for file in data_dir.iterdir():
-        genome = ""
+        genome = []
         with file.open("r") as csvfile:
             reader = csv.DictReader(csvfile, fieldnames=field_names)
             next(reader)  # Skip header
@@ -287,7 +288,7 @@ def read_real_data(
                     names[name] = len(names)
                 gene_id = names[name]
                 try:
-                    genome += chr(gene_id)
+                    genome += [gene_id]
                 except ValueError:
                     genome = None
                     break

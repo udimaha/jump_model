@@ -7,13 +7,13 @@ import pytest
 from ..STree import STree
 
 
-def yield_token(string: str):
+def yield_token(string: List[int]):
 	for i in range(len(string) + 1):
 		for j in range(i):
-			yield string[j:i]
+			yield tuple(string[j:i])
 
 
-def count_naive(strings: List[str]):
+def count_naive(strings: List[List[int]]):
 	occurrences = {}
 	for s in strings:
 		for token in yield_token(s):
@@ -21,7 +21,6 @@ def count_naive(strings: List[str]):
 				occurrences[token] = 0
 			occurrences[token] += 1
 	flat = {}
-	# print(occurrences)
 	for k, v in occurrences.items():
 		if v <= 1:
 			continue
@@ -30,17 +29,17 @@ def count_naive(strings: List[str]):
 	return flat
 
 
-def _make_strings(string_count: int, string_size: int):
-	base = list(map(chr, range(string_size)))
+def _make_strings(string_count: int, string_size: int) -> List[List[int]]:
+	base = list(range(string_size))
 	strings = []
 	for _ in range(string_count):
 		new_ = list(base)
 		random.shuffle(new_)
-		strings.append(''.join(new_))
+		strings.append(new_)
 	return strings
 
 
-def assert_algo(strings: List[str], check_runtime: bool = True):
+def assert_algo(strings: List[List[int]], check_runtime: bool = True):
 	x = STree(strings)
 	occurrences_start = time.perf_counter()
 	res = x.occurrences()
@@ -55,7 +54,7 @@ def assert_algo(strings: List[str], check_runtime: bool = True):
 		assert sorted(res[k]) == sorted(v), f"Occurrences algorithm produced different results than naive algo for island size {k}: naive {v} != {res[k]} occurrences"
 
 
-def run_scenario(string_count: int = 256, string_size: int = 301):
+def run_scenario(string_count: int = 8, string_size: int = 301):
 	strings = _make_strings(string_count, string_size)
 	assert_algo(strings)
 
@@ -65,22 +64,26 @@ def test_occurrences(run: int):
 	run_scenario()
 
 
-def _superset(string: str) -> List[str]:
+def _superset(string: List[int]) -> List[List[int]]:
 	return [string[:i] for i in reversed(range(1, len(string) + 1))]
 
 
 def test_specific():
-	string = "abcdefghijk"
+	string = list(range(11)) # "abcdefghijk"
 	strings = _superset(string)
 	assert_algo(strings, False)
-	strings.append(string + "xyz")
+	strings.append(string + [100,101,102])
 	assert_algo(strings, False)
-	strings.append(string + "lmnop")
+	strings.append(string + [80,81,82,83])
 	assert_algo(strings, False)
 
 
-@pytest.mark.skip(reason="Currently fails for repeating input")
-def test_repeated():
-	string = ''.join(["abcdefghijk"] * 16)
-	strings = _superset(string)
-	assert_algo(strings, False)
+# @pytest.mark.skip(reason="Currently fails for repeating input")
+# def test_repeated():
+# 	# string = ''.join(["abcdefghijk"] * 2)
+# 	string = ''.join(["abcd"] * 2)
+# 	strings = _superset(string)
+# 	assert_algo(strings, False)
+
+#
+
