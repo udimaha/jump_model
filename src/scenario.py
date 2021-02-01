@@ -277,9 +277,9 @@ def read_real_data(
 ) -> Occurrences:
     names = {}
     genomes = []
+    sizes = []
     for file_ in data_dir.iterdir():
         genome = []
-        sizes = []
         with file_.open("r") as csvfile:
             reader = csv.DictReader(csvfile, fieldnames=field_names)
             next(reader)  # Skip header
