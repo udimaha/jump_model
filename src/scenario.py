@@ -1,15 +1,13 @@
-import csv
 import itertools
 import json
 import logging
 import statistics
 import struct
 import time
-from pathlib import Path
 
 import numpy.random
 from math import isclose
-from typing import Optional, NamedTuple, Dict, List, Tuple
+from typing import Optional, NamedTuple, List, Tuple
 
 from .genome import GenomeMaker, make_identity_genome
 from .newick import NewickParser
@@ -269,34 +267,3 @@ def run_scenario(size: int, scale: float, genome_size: int, alpha: float) -> Res
         model_tree, genome_size, scale, size, sum(total_jumped), statistics.mean(total_jumped) if total_jumped else 0,
         alpha, random_seed, occurrences
     )
-
-
-def read_real_data(
-        data_dir: Path, name_key: str = "Cog",
-        field_names: Tuple[str] = ("Taxid", "Gene name", "Contig", "Srnd", "Start", "Stop", "Length", "Cog")
-) -> Occurrences:
-    names = {}
-    genomes = []
-    sizes = []
-    for file_ in data_dir.iterdir():
-        genome = []
-        with file_.open("r") as csvfile:
-            reader = csv.DictReader(csvfile, fieldnames=field_names)
-            next(reader)  # Skip header
-            for line in reader:
-                name = line[name_key]
-                if name not in names:
-                    names[name] = len(names)
-                gene_id = names[name]
-                genome += [gene_id]
-        if genome is not None:
-            logging.info("Done parsing genome: %s genome size is: %d", file_, len(genome))
-            sizes.append(len(genome))
-            genomes.append(genome)
-    with time_func(f"Constructing the suffix tree for {len(genomes)} genomes!"):
-        suffix_tree = STree(genomes)
-    with time_func(f"Counting occurrences for {len(genomes)} genomes!"):
-        logging.info(
-            "Smallest geome is: %d longest geome is: %d average genome is: %d median genome is: %d",
-            min(sizes), max(sizes), statistics.mean(sizes), statistics.median(sizes))
-        return suffix_tree.occurrences()
