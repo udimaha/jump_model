@@ -16,6 +16,15 @@ from collections import defaultdict
 from src.scenario import read_real_data
 
 
+DENSITY_THRESHOLD = 3
+FONT_SIZE = 5
+LABEL_ROTATION_ANGLE = 30
+PNG_DPI = 2500
+FIGURE_HEIGHT = 3
+FIGURE_ASPECT = 3
+X_AXIS = "occur"
+
+
 logging.basicConfig(
     format='%(asctime)s %(levelname)-8s %(message)s',
     level=logging.INFO,
@@ -46,6 +55,11 @@ def parse_configuration(config_path: Path) -> Configuration:
     return Configuration(realdata, output)
 
 
+def chunks(lst: list, n: int):
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+
 def populate_realdata_csv(data_json: Path, out_dir: Path):
     with data_json.open("r") as f:
         data = json.load(f)
@@ -53,6 +67,7 @@ def populate_realdata_csv(data_json: Path, out_dir: Path):
     fieldnames = ["occur", "density", "norm-density"]
     for size_, dist in data.items():
         csv_out = out_dir / f"realdata-{size_}.csv"
+        found_any = False
         with csv_out.open("w") as csv_f:
             writer = csv.DictWriter(csv_f, fieldnames=fieldnames)
             writer.writeheader()
@@ -60,9 +75,14 @@ def populate_realdata_csv(data_json: Path, out_dir: Path):
             for occur in dist:
                 density[occur] += 1
             for occur, density_ in density.items():
+                if density_ < DENSITY_THRESHOLD:
+                    continue
+                found_any = True
                 writer.writerow(
                     {"occur": occur, "density": density_, "norm-density": np.log(density_)})
-        sample_id += 1
+            sample_id += 1
+        if not found_any:
+            csv_out.unlink()
 
 
 def draw_csvs(out_dir: Path, data_dir: Path):
@@ -70,17 +90,20 @@ def draw_csvs(out_dir: Path, data_dir: Path):
         data_set = pd.read_csv(csv_file)
         data_set = data_set.sort_values(by=["occur"])
         print(data_set)
-        for normalized in (True, False):
+        for normalized in (True,):# False):
             if normalized:
                 ys = "norm-density"
                 filename = f"norm-dist-{csv_file.name}"
             else:
                 ys = "density"
                 filename = f"dist-{csv_file.name}"
-            plt.figure(figsize=(20, 20))
-            sns.catplot(data=data_set, x="occur", y=ys)
             out_file = (out_dir / filename).with_suffix(".png")
-            plt.savefig(str(out_file))
+            if out_file.exists():
+                continue
+            g = sns.catplot(data=data_set, x=X_AXIS, y=ys, kind="bar", height=FIGURE_HEIGHT, aspect=FIGURE_ASPECT)
+            g.set_xticklabels(rotation=LABEL_ROTATION_ANGLE, fontsize=FONT_SIZE)
+            plt.savefig(str(out_file), dpi=PNG_DPI)
+            plt.close(str(out_file))
 
 
 class Main:
