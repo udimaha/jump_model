@@ -130,28 +130,47 @@ class YuleTreeGenerator:  # TODO: Calculate average branch length, assert that i
         self._leaves: List[TreeNode] = []
         self._last_id = 0
 
-    def _split(self):
-        to_split: TreeNode = self._rndm_gen.choice(self._leaves)
-        assert not to_split.children
+    def new_id(self) -> int:
+        self._last_id += 1
+        return self._last_id
+
+    def _split(self, to_split: TreeNode):
         new = [
             TreeNode(
-                self._last_id + i, edge_len=self._rndm_gen.exponential(scale=self._scale), father=to_split)
+                self.new_id(), edge_len=self._rndm_gen.exponential(scale=self._scale), father=to_split)
             for i in range(2)]
         to_split.children = new
-        self._last_id += 2
         self._leaves.remove(to_split)
         self._leaves.extend(new)
-        # self.complete_max_depth()
 
-    def construct(self, complete_max_depth: bool = False) -> TreeView:
+    def _hang(self, to_hang: TreeNode):
+        hang_at = self._rndm_gen.random() * to_hang.edge_len
+        to_hang.edge_len -= hang_at
+        new_father = TreeNode(
+            self.new_id(), edge_len=hang_at, father=to_hang.father
+        )
+        to_hang.father = new_father
+        siebling = TreeNode(
+            self.new_id(), edge_len=self._rndm_gen.exponential(scale=self._scale), father=new_father)
+        new_father.children = [siebling, to_hang]
+        to_hang.father.children.remove(to_hang)
+        to_hang.father.children.append(new_father)
+        self._leaves.append(siebling)
+
+    def construct(self, ultrametric: bool = False) -> TreeView:
         root = TreeNode(0)
         if self._size == 1:
-            return root
+            return TreeView(root, [root])
         self._leaves.append(root)
         while len(self._leaves) < self._size:
-            self._split()
-        if complete_max_depth:
-            self.complete_max_depth()
+            leaf: TreeNode = self._rndm_gen.choice(self._leaves)
+            assert not leaf.children
+            if ultrametric:
+                self._hang(leaf)
+            else:
+                self._split(leaf)
+        # if ultrametric:  # TODO: This is a naive implementation of ultrametric construction
+        #     self.complete_max_depth()
         self.name_leaves()
         return TreeView(root, self._leaves)
 

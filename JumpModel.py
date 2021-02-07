@@ -24,10 +24,11 @@ MAX_PROCESSES = 20
 
 
 def run_single_job(
-        pattern: str, leaf_count: int, scale: float, base_path: Path, alpha: float, genome_size: int, idx: int):
+        pattern: str, leaf_count: int, scale: float, base_path: Path, alpha: float, genome_size: int, idx: int,
+        ultrametric: bool):
     assert pattern
     with time_func(f"Running tree: {idx} of scenario with {leaf_count} leaves, alpha: {alpha} and scale: {scale}"):
-        result = run_scenario(leaf_count, scale, genome_size=genome_size, alpha=alpha)
+        result = run_scenario(leaf_count, scale, genome_size=genome_size, alpha=alpha, ultrametric=ultrametric)
     output = (base_path / f"{uuid.uuid4()}_{pattern}")
     with gzip.open(str(output.with_suffix(".json.gz")), "w") as f_gz:
         f_gz.write(result.to_json().encode())
@@ -35,13 +36,13 @@ def run_single_job(
 
 def run_scenarios(
         leaf_count: int, scale: float, base_path: Path, alpha: float, tree_count: int,
-        genome_size: int, processes: int):
+        genome_size: int, processes: int, ultrametric: bool):
     assert 0 < processes <= MAX_PROCESSES
     pattern = f"scale_{scale}_leaves_{leaf_count}_genome_{genome_size}_alpha_{alpha}.json"
     with futures.ThreadPoolExecutor(max_workers=processes) as executor:
         jobs = [
             executor.submit(
-                run_single_job, pattern, leaf_count, scale, base_path, alpha, genome_size, idx)
+                run_single_job, pattern, leaf_count, scale, base_path, alpha, genome_size, idx, ultrametric)
             for idx in range(tree_count)]
         for job in futures.as_completed(jobs):
             try:
@@ -67,6 +68,7 @@ class Configuration(NamedTuple):
     genome_size: int
     leaf_count: int
     processes: int
+    ultrametric: bool
     scale: Scale
 
     def validate(self):
@@ -94,10 +96,12 @@ def parse_configuration(config_path: Path) -> Configuration:
     genome_size = int(get_conf_val("genome_size"))
     leaf_count = int(get_conf_val("leaf_count"))
     processes = int(get_conf_val("processes"))
+    ultrametric = bool(get_conf_val("ultrametric"))
     scale = Scale(*map(lambda x: round(x, 2), get_conf_val("scale")))
     return Configuration(
         data_path=Path(data_path).expanduser(), tree_count=tree_count, alpha=alpha,
-        genome_size=genome_size, leaf_count=leaf_count, processes=processes, scale=scale
+        genome_size=genome_size, leaf_count=leaf_count, processes=processes, scale=scale,
+        ultrametric=ultrametric
     )
 
 
@@ -115,7 +119,7 @@ def main(config: str):
         run_scenarios(
             leaf_count=configuration.leaf_count, scale=current_scale, base_path=configuration.data_path,
             alpha=configuration.alpha, tree_count=configuration.tree_count, genome_size=configuration.genome_size,
-            processes=configuration.processes)
+            processes=configuration.processes, ultrametric=ultrametric)
         current_scale = round(current_scale + configuration.scale.step, ndigits=2)
 
 

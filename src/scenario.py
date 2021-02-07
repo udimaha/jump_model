@@ -238,14 +238,14 @@ class Result(NamedTuple):
         return True
 
 
-def run_scenario(size: int, scale: float, genome_size: int, alpha: float) -> Result:
+def run_scenario(size: int, scale: float, genome_size: int, alpha: float, ultrametric: bool) -> Result:
     with time_func("Seeding numpy random"):
         random_seed = int(time.time())
         numpy.random.seed(random_seed)
         genome_maker = GenomeMaker(random_seed, alpha)
 
     with time_func("Constructing the Yule tree"):
-        res = YuleTreeGenerator(size=size, scale=scale, seed=random_seed).construct()
+        res = YuleTreeGenerator(size=size, scale=scale, seed=random_seed).construct(ultrametric)
     with time_func("Get branch statistics"):
         branch_stats = res.root.branch_len_stats()
     logging.info(
