@@ -25,7 +25,9 @@ def run_single_job(
     assert pattern
     with time_func(f"Running tree: {idx} of scenario with {leaf_count} leaves, alpha: {alpha} and scale: {scale}"):
         result = run_scenario(leaf_count, scale, genome_size=genome_size, alpha=alpha, ultrametric=ultrametric)
-    output = (base_path / f"{uuid.uuid4()}_{pattern}")
+    outdir = base_path / str(scale)
+    outdir.mkdir(exist_ok=True)
+    output = outdir / f"{uuid.uuid4()}_{pattern}"
     with gzip.open(str(output.with_suffix(".json.gz")), "w") as f_gz:
         f_gz.write(result.to_json().encode())
 
