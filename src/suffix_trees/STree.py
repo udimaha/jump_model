@@ -45,6 +45,7 @@ class STree:
         assert input_
         if isinstance(input_[0], list):
             input_: List[List[int]]
+            assert all(numlist for numlist in input_)
             assert all(all(num >= 0 for num in numlist) for numlist in input_)
         else:
             input_: List[int]
