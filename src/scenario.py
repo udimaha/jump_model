@@ -1,4 +1,3 @@
-import itertools
 import json
 import logging
 import statistics
@@ -260,7 +259,8 @@ def run_scenario(size: int, scale: float, genome_size: int, alpha: float, ultram
     newick = res.root.to_newick()
     internal_branches_orig = len([c for c in newick if c == ')']) - 1
     model_tree = TreeDesc(newick, internal_branches_orig, branch_stats)
-    suffix_tree = STree(list(itertools.chain.from_iterable(leaf.genome.genes for leaf in res.leaves)))
+    concat_genomes = [leaf.genome.genes for leaf in res.leaves]
+    suffix_tree = STree(concat_genomes)
     with time_func("Counting occurrences"):
         occurrences = suffix_tree.occurrences()
     return Result(
