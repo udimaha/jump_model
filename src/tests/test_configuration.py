@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from JumpModel import parse_configuration
+from src.simulator.configuration import parse_configuration
 
 
 def test_configuration():
