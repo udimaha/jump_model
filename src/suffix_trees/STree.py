@@ -10,7 +10,10 @@ def input_type(input_: Input) -> str:
 
     In case of an invalid input throws ValueError.
     """
+    if not input_:
+        raise ValueError("Received empty input!")
     if isinstance(input_[0], list):
+        assert len(input_) > 1
         if all(isinstance(item, list) for item in input_):
             input_: List[List[int]]
             if all(all(isinstance(item, int) for item in numlist) for numlist in input_):
@@ -59,6 +62,10 @@ class STree:
 
         :param x: String or List of Strings
         """
+        if not x:
+            raise ValueError("Received empty input!")
+        if isinstance(x[0], list) and len(x) == 1:
+            x = x[0]
         type_ = input_type(x)
 
         if type_ == 'st':
@@ -143,7 +150,7 @@ class STree:
             return True
         self._visited.add(node)
         count = node.get_occurrences()
-        assert count > 0
+        assert count > 0, f"WTF? {node}"
         if count == 1:  # TODO: Test how much does this improve performance-wise
             return False
         island = self._get_branch(node)  # node.branch
@@ -277,7 +284,8 @@ class SNode:
         return (
                 "SNode: idx:" + str(self.idx) +
                 " transitons:" + str(list(self.transition_links.keys())) +
-                " branch: " + str(self.branch)
+                " branch: " + str(self.branch) +
+                " labels: " + str(self.generalized_idxs)
                 # " parent: " + my_parent #+
         #        " depth:" + str(self.depth)
         )
