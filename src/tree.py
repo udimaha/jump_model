@@ -149,12 +149,12 @@ class YuleTreeGenerator:  # TODO: Calculate average branch length, assert that i
         new_father = TreeNode(
             self.new_id(), edge_len=hang_at, father=to_hang.father
         )
-        to_hang.father = new_father
         siebling = TreeNode(
             self.new_id(), edge_len=self._rndm_gen.exponential(scale=self._scale), father=new_father)
         new_father.children = [siebling, to_hang]
         to_hang.father.children.remove(to_hang)
         to_hang.father.children.append(new_father)
+        to_hang.father = new_father
         self._leaves.append(siebling)
 
     def construct(self, ultrametric: bool = False) -> TreeView:
@@ -165,7 +165,7 @@ class YuleTreeGenerator:  # TODO: Calculate average branch length, assert that i
         while len(self._leaves) < self._size:
             leaf: TreeNode = self._rndm_gen.choice(self._leaves)
             assert not leaf.children
-            if ultrametric:
+            if ultrametric and leaf is not root:
                 self._hang(leaf)
             else:
                 self._split(leaf)
