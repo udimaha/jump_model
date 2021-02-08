@@ -276,13 +276,3 @@ class GenomeMaker:
             jumping.append(GenomeSegment(index, group_size))
             index += group_size
         return jumping
-
-
-def test_get_neighbourhood():
-    genome_maker = GenomeMaker(1, 1)
-    gene = 1
-    genome = make_identity_genome(20)
-    print(f"Original genome: {genome} neighborhood: {genome.get_neighbourhood(gene, 5)}")
-    for i in range(10):
-        mut = genome_maker.make(genome, scale=0.3)
-        print(f"Iteration {i}: {mut} neighborhood: {mut.get_neighbourhood(gene, 5)}")

@@ -3,8 +3,8 @@ import random
 import pytest
 
 from ..occurrences import Occurrences, serialize_occurrences, deserialize_occurrences
-from ..scenario import TreeDesc, Result
-from ..tree import BranchLenStats
+from src.simulator.scenario import Result
+from ..tree import BranchLenStats, TreeDesc
 
 
 def _rand_int() -> int:

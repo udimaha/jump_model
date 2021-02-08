@@ -1,7 +1,7 @@
 import logging
 from typing import NamedTuple, Dict, Optional, Iterable, Tuple, List
 
-from .tree import TreeNode
+from src.tree import TreeNode
 
 
 class NewickParserResult(NamedTuple):

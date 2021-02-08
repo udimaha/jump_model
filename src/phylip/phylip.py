@@ -3,7 +3,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Dict, List, Tuple
 
-from .tree import TreeNode
+from src.tree import TreeNode
 
 
 class PhylipDrawer:

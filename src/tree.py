@@ -1,11 +1,12 @@
 import itertools
 import logging
 import statistics
+import struct
 from math import isclose
-from typing import NamedTuple, Optional, List
+from typing import NamedTuple, Optional, List, Tuple
 from numpy.random import default_rng
 from .name_gen import NameGenerator
-from .genome import Genome
+from .genome import Genome, GenomeMaker, make_identity_genome
 
 
 class BranchLenStats(NamedTuple):
@@ -184,3 +185,49 @@ class YuleTreeGenerator:  # TODO: Calculate average branch length, assert that i
         for leaf in self._leaves:
             leaf.extend(max_edge_len)
         assert all(isclose(leaf.distance_from_root(), max_edge_len) for leaf in self._leaves)
+
+
+def fill_genome(
+        node: TreeNode, genome_size: int, total_jumped: Optional[List[int]], maker: GenomeMaker):
+    assert total_jumped is not None
+    if node.father is None:
+        identity_genome = make_identity_genome(genome_size)
+        node.genome = identity_genome
+    else:
+        assert maker
+        jumped, node.genome = maker.make(node.father.genome, scale=node.edge_len)
+        total_jumped.append(jumped)
+    for child in node.children:
+        fill_genome(child, genome_size=genome_size, maker=maker, total_jumped=total_jumped)
+
+
+class TreeDesc(NamedTuple):
+    newick: str
+    internal_edges: int
+    branch_stats: BranchLenStats
+
+    def to_json(self) -> dict:
+        return {
+           "newick": self.newick,
+           "internal_edge_count": self.internal_edges,
+           "edge_count": self.branch_stats.count,
+           "median_edge_len": self.branch_stats.median,
+           "average_edge_len": self.branch_stats.average,
+        }
+
+    def serialize(self) -> bytes:
+        newick = self.newick.encode()
+        format_ = f"i{len(newick)}siiff"
+        return struct.pack(
+            format_, len(newick), newick, self.internal_edges, self.branch_stats.count,
+            self.branch_stats.median, self.branch_stats.average)
+
+    @classmethod
+    def deserialize(cls, data: bytes) -> Tuple[int, 'TreeDesc']:
+        newick_len, = struct.unpack("i", data[:4])
+        format_ = f"{newick_len}siiff"
+        total_parsed = 4+struct.calcsize(format_)
+        newick, internal_edges, edge_count, median_edge, avg_edge = struct.unpack(
+            format_, data[4:total_parsed])
+        return total_parsed, TreeDesc(
+            newick.decode(), internal_edges, BranchLenStats(avg_edge, median_edge, edge_count))
