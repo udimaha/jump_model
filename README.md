@@ -77,10 +77,9 @@ The resulting file has the following structure:
 {
     "model": {
       "newick": "(A:0.1,B:0.2,(C:0.3,D:0.4):0.5);",
-      "internal_edge_count": 0,
       "edge_count": 0,
       "median_edge_len": 0.0,
-      "average_edge_len": 0.0,
+      "average_edge_len": 0.0
     },
     "genome_size": 4096,
     "total_jumps": 17,
@@ -95,7 +94,19 @@ The resulting file has the following structure:
     "alpha": 0.5
 }
 ```
-The `occurrences` field contains the list of common occurrences for each word size.
+- `model` - Holds data related to the construction of the tree:
+    - `newick` - The resulting tree represented in Newick format
+    - `edge_count` - The number of edges in the tree.
+    - `median_edge_len` - The median edge length.
+    - `average_edge_len` - The average edge length.
+- `genome_size` - The number of genes in each genome.
+- `total_jumps` - The total number of jump events which occurred during the simulation.
+- `avg_jumps` - The average number of jump events in a single inheritance step.
+- `expected_edge_len` - The expected edge length for the constructed tree (the scale parameter of the exponential distribution).
+- `leaves_count` - Number of leaves in the generated tree.
+- `seed` - Value used to seed the random number generator.
+- `occurrences` - A dictionary containing the list of common occurrences for each word size.
+- `alpha` - The alpha argument used to determine the size of the "jumping" group.
 
 
 The simulation reads parameters from a configuration file, an example file can be found in: [Code Directory](configurations/sample_simulate.json).
