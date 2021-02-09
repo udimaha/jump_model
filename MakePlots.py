@@ -13,7 +13,7 @@ logging.basicConfig(
 	datefmt='%Y-%m-%d %H:%M:%S')
 
 
-def main(data_path: str, output_path: str, edge_lengths: int = 9):
+def main(data_path: str, output_path: str, edge_lengths: int):
 	data_path = Path(data_path).expanduser()
 	output_path = Path(output_path).expanduser()
 	sns.set()
