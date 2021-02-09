@@ -37,7 +37,7 @@ https://github.com/ptrus/suffix-trees
 
 ## Getting started
 Clone the repository:
-> git clone [LINK MISSING]
+> git clone https://github.com/tomfeigin/jump_model.git
 
 Step into the cloned repository
 > cd jump_model
