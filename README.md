@@ -127,6 +127,7 @@ This utility is used to convert the JSON file produced by the `Simulate` utility
 
 #### Usage
 > python Tabulate.py CONFIG_FILE
+
 The utility reads parameters from a configuration file, an example file can be found in: [Code Directory](configurations/sample_tabulate.json).
 #### Example:
 ```json
