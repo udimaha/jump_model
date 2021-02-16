@@ -44,7 +44,7 @@ class PhylipNeighborConstructor:
         for f in self.OUTPUT_PATHS:
             if f.exists():
                 f.unlink()
-        text = f'  {len(matrix)}\n' +  '\n'.join(
+        text = f'  {len(matrix)}\n' + '\n'.join(
             name + ' '*9 + '  '.join(
                 str(round(distance, 4)).ljust(6, '0') for distance in distances) for name, distances in matrix.items())
         self.INPUT_PATH.write_text(text)
