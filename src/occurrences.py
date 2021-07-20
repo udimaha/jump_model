@@ -2,15 +2,18 @@ import struct
 from typing import Dict, List
 
 Occurrences = Dict[str, List[int]]
+meanOccs = Dict[str, float]
 
 
 def serialize_occurrences(to_serialize: Occurrences) -> bytes:
+	print('serialize_occurrences')
 	island_count = len(to_serialize)
 	islands = [struct.pack(f"ii{len(v)}i", int(k), len(v), *v) for k, v in to_serialize.items()]
 	return struct.pack("i", island_count) + b''.join(islands)
 
 
 def deserialize_occurrences(to_deserialize: bytes) -> Occurrences:
+	print('deserialize_occurrences')
 	res = {}
 	island_count, = struct.unpack('i', to_deserialize[:4])
 	cursor = 4
