@@ -2,7 +2,7 @@ import struct
 from typing import Dict, List
 
 Occurrences = Dict[str, List[int]]
-
+meanOccs = Dict[str, float]
 
 def serialize_occurrences(to_serialize: Occurrences) -> bytes:
 	island_count = len(to_serialize)
