@@ -145,7 +145,7 @@ def run_scenario(size: int, scale: float, idx: int, genome_size: int, alpha: flo
     print('run_scenario suffix_tree = ', suffix_tree)
     with time_func("Counting occurrences"):
         occurrences = suffix_tree.occurrences()
-        for i in range(1, len(occurrences) + 1):
+        for i in range(1, genome_size + 1):
             mean_occurrences[i] = sum(occurrences[i])/len(occurrences[i])
             comulative_mean_occs[i] = total_results[i]
     return Result(
